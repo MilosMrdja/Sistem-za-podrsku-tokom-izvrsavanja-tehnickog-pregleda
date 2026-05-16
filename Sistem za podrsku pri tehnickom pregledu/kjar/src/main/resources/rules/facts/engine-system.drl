@@ -1,0 +1,73 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.facts.DriveSystemFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+rule "ENGINE: Engine mounts not intact"
+    salience 90
+    when
+        $d : DriveSystemFact(engineMountsIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "ENGINE_MOUNTS", "DAMAGED",
+            "Nosači motora nisu ispravni."
+        ));
+end
+
+rule "ENGINE: Oil or fluid leaking from engine"
+    salience 90
+    when
+        $d : DriveSystemFact(noEngineFluidLeak == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "ENGINE_FLUID", "LEAK",
+            "Detektovano curenje ulja ili drugih tečnosti iz motora."
+        ));
+end
+
+rule "ENGINE: Ignition system has mechanical damage"
+    salience 90
+    when
+        $d : DriveSystemFact(ignitionSystemIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "IGNITION", "MECHANICAL_DAMAGE",
+            "Sistem za paljenje ima mehanička oštećenja."
+        ));
+end
+
+rule "ENGINE: Fuel supply not properly secured"
+    salience 90
+    when
+        $d : DriveSystemFact(fuelSupplySecured == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "FUEL_SUPPLY", "NOT_SECURED",
+            "Sistem za dovod goriva nije pravilno pričvršćen."
+        ));
+end
+
+rule "ENGINE: Fuel supply leaking"
+    salience 90
+    when
+        $d : DriveSystemFact(noFuelLeak == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "FUEL_SUPPLY", "LEAK",
+            "Sistem za dovod goriva curi."
+        ));
+end
+
+// ── Power transmission ─────────────────────────────────────────────────────────
+
+rule "TRANSMISSION: Not safe for single-hand gear change"
+    salience 90
+    when
+        $p : DriveSystemFact(transmissionSafeForSingleHandOperation == false)
+    then
+        insert(InspectionIssue.of(
+            "ENGINE", "TRANSMISSION", "NOT_FUNCTIONAL",
+            "Uređaj za prenos snage nije izveden tako da vozač pri promeni stepena prenosa može bezbedno upravljati jednom rukom."
+        ));
+end
+

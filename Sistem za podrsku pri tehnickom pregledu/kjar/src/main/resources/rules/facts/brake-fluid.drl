@@ -1,0 +1,42 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.facts.BrakeFluidFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — BRAKE FLUID (KočionaTečnostNeispravna / KočioniSistemCurenje)
+//  Salience 90.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "BRAKE-FLUID: Moisture content exceeds 4%"
+    salience 100
+    when
+        $b : BrakeFluidFact(moisturePercent > 4.0)
+    then
+        insert(InspectionIssue.of(
+            "BRAKE_SYSTEM", "FLUID", "MOISTURE_TOO_HIGH",
+            "Procenat vlage u kočionoj tečnosti prelazi 4% (izmereno: " + $b.getMoisturePercent() + "%)."
+        ));
+end
+
+rule "BRAKE-FLUID: Boiling point below 155°C"
+    salience 100
+    when
+        $b : BrakeFluidFact(boilingPointCelsius < 155.0)
+    then
+        insert(InspectionIssue.of(
+            "BRAKE_SYSTEM", "FLUID", "BOILING_POINT_TOO_LOW",
+            "Temperatura ključanja kočione tečnosti je ispod 155°C (izmereno: " + $b.getBoilingPointCelsius() + "°C)."
+        ));
+end
+
+rule "BRAKE-FLUID: System leakage detected"
+    salience 100
+    when
+        $b : BrakeFluidFact(systemLeaking == true)
+    then
+        insert(InspectionIssue.of(
+            "BRAKE_SYSTEM", "FLUID", "LEAK",
+            "Detektovano curenje na kočionom sistemu."
+        ));
+end

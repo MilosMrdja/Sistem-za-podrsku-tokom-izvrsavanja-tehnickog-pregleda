@@ -1,0 +1,65 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.models.InspectionConditions;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — PRE-INSPECTION CONDITIONS (UsloviNeispunjeni)
+//  Salience 100 — fires first.
+//  Any violation here means the inspection CANNOT START (NIJE_ZAPOCET).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "PRE-INSPECTION: Vehicle not clean or not operational"
+    salience 100
+    when
+        $c : InspectionConditions(vehicleClean == false || vehicleOperational == false)
+    then
+        insert(InspectionIssue.of(
+            "PRE_INSPECTION", "VEHICLE_STATE", "NOT_CLEAN_OR_NOT_OPERATIONAL",
+            "Vozilo nije čisto ili nije u voznom stanju."
+        ));
+end
+
+rule "PRE-INSPECTION: Vehicle overloaded"
+    salience 100
+    when
+        $c : InspectionConditions(notOverloaded == false)
+    then
+        insert(InspectionIssue.of(
+            "PRE_INSPECTION", "VEHICLE_STATE", "OVERLOADED",
+            "Vozilo je preopterećeno teretom ili putnicima."
+        ));
+end
+
+rule "PRE-INSPECTION: Vehicle not registered or registration not active"
+    salience 100
+    when
+        $c : InspectionConditions(registeredInSerbia == false || registrationActive == false)
+    then
+        insert(InspectionIssue.of(
+            "PRE_INSPECTION", "REGISTRATION", "NOT_REGISTERED_OR_INACTIVE",
+            "Vozilo nije registrovano u Republici Srbiji ili je odjavljeno."
+        ));
+end
+
+rule "PRE-INSPECTION: Missing registration plate(s)"
+    salience 100
+    when
+        $c : InspectionConditions(registeredInSerbia == true, bothPlatesPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "PRE_INSPECTION", "REGISTRATION", "MISSING_PLATES",
+            "Vozilo nema obe registarske tablice."
+        ));
+end
+
+rule "PRE-INSPECTION: Corrosion holes in bodywork"
+    salience 100
+    when
+        $c : InspectionConditions(noCorrosionHoles == false)
+    then
+        insert(InspectionIssue.of(
+            "PRE_INSPECTION", "BODYWORK", "CORROSION_HOLES",
+            "Karoserija poseduje rupe izazvane korozijom."
+        ));
+end

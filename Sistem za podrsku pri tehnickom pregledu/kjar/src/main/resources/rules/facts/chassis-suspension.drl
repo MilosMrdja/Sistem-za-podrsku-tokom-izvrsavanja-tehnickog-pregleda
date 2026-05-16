@@ -1,0 +1,70 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.facts.SuspensionSystemFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+rule "SUSPENSION: Control arms (poluge) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(armsIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_ARMS", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na polugama oslanjanja."
+        ));
+end
+
+rule "SUSPENSION: Fork/strut (viljuška) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(forksIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_FORKS", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na viljuškama."
+        ));
+end
+
+rule "SUSPENSION: Anti-roll bar (stabilizator) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(stabilizersIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_STABILIZER", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na stabilizatorima."
+        ));
+end
+
+rule "SUSPENSION: Ball joints / tie-rod ends (zglobovi) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(jointsIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_JOINTS", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na zglobovima."
+        ));
+end
+
+rule "SUSPENSION: Shock absorbers (amortizeri) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(shockAbsorbersIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_SHOCKS", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na amortizerima."
+        ));
+end
+
+rule "SUSPENSION: Springs (opruge) damaged"
+    salience 90
+    when
+        $s : SuspensionSystemFact(springsIntact == false)
+    then
+        insert(InspectionIssue.of(
+            "CHASSIS_SUSPENSION", "SUSPENSION_SPRINGS", "MECHANICAL_DAMAGE",
+            "Mehaničko oštećenje na oprugama."
+        ));
+end

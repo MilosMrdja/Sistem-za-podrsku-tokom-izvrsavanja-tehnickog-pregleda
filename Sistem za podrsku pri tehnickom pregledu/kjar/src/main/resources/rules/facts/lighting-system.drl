@@ -1,0 +1,288 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.entities.Vehicle;
+import sistem_tehnicki_pregled.model.facts.LightingSystemFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+import sistem_tehnicki_pregled.model.enums.LightBulbType;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — LIGHTING SYSTEM (SvetlosniUredjajNeispravan)
+//  Salience 90.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Beam intensity ─────────────────────────────────────────────────────────────
+
+rule "LIGHTS: Low-beam intensity out of range (must be 40–80 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(lowBeamIntensityM < 40.0 || lowBeamIntensityM > 80.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "LOW_BEAM", "INTENSITY_OUT_OF_RANGE",
+            "Jačina kratkog svetla " + $l.getLowBeamIntensityM() + " m je izvan dozvoljenog opsega 40–80 m."
+        ));
+end
+
+rule "LIGHTS: High-beam intensity below 100 m"
+    salience 90
+    when
+        $l : LightingSystemFact(highBeamIntensityM < 100.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HIGH_BEAM", "INTENSITY_TOO_LOW",
+            "Jačina dugog svetla " + $l.getHighBeamIntensityM() + " m ispod minimuma 100 m."
+        ));
+end
+
+rule "LIGHTS: Front fog-light exceeds 35 m"
+    salience 90
+    when
+        $l : LightingSystemFact(frontFogLightIntensityM > 35.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "FRONT_FOG", "INTENSITY_TOO_HIGH",
+            "Jačina prednjeg svetla za maglu " + $l.getFrontFogLightIntensityM() + " m prelazi maksimum 35 m."
+        ));
+end
+
+rule "LIGHTS: Rear fog-light intensity out of range (must be 0.25–1 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(rearFogLightIntensityM < 0.25 || rearFogLightIntensityM > 1.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "REAR_FOG", "INTENSITY_OUT_OF_RANGE",
+            "Jačina zadnjeg svetla za maglu " + $l.getRearFogLightIntensityM() + " m izvan opsega 0.25–1 m."
+        ));
+end
+
+// ── Reversing light colour ─────────────────────────────────────────────────────
+
+rule "LIGHTS: Reversing lights not white"
+    salience 90
+    when
+        $l : LightingSystemFact(reversingLightsWhite == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "REVERSING_LIGHT", "WRONG_COLOUR",
+            "Svetla za vožnju unazad ne svetle belom bojom."
+        ));
+end
+
+// ── Beam orientation (only for vehicles first registered after 01.07.2012) ─────
+
+rule "LIGHTS: Non-halogen — high-beam orientation exceeds 16 lx"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDate >= java.time.LocalDate.of(2012, 7, 1))
+        $l : LightingSystemFact(headlightBulbType == LightBulbType.NON_HALOGEN,
+                                 highBeamOrientationLx > 16.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HIGH_BEAM_ORIENTATION", "NON_HALOGEN_EXCEEDS_16LX",
+            "Nehalogeno svetlo: usmerenost dugog svetla " + $l.getHighBeamOrientationLx() + " lx prelazi 16 lx."
+        ));
+end
+
+rule "LIGHTS: Halogen dual-filament — high-beam orientation below 24 lx"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDate >= java.time.LocalDate.of(2012, 7, 1))
+        $l : LightingSystemFact(headlightBulbType == LightBulbType.HALOGEN_DUAL_FILAMENT,
+                                 highBeamOrientationLx < 24.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HIGH_BEAM_ORIENTATION", "HALOGEN_DUAL_BELOW_24LX",
+            "Halogena sijalica sa dve žarne niti: usmerenost " + $l.getHighBeamOrientationLx() + " lx ispod minimuma 24 lx."
+        ));
+end
+
+rule "LIGHTS: Halogen single-filament — high-beam orientation below 32 lx"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDate >= java.time.LocalDate.of(2012, 7, 1))
+        $l : LightingSystemFact(headlightBulbType == LightBulbType.HALOGEN_SINGLE_FILAMENT,
+                                 highBeamOrientationLx < 32.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HIGH_BEAM_ORIENTATION", "HALOGEN_SINGLE_BELOW_32LX",
+            "Halogena sijalica sa jednom žarnom niti: usmerenost " + $l.getHighBeamOrientationLx() + " lx ispod minimuma 32 lx."
+        ));
+end
+
+rule "LIGHTS: Gas-discharge — high-beam orientation out of range (35–180 lx)"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDate >= java.time.LocalDate.of(2012, 7, 1))
+        $l : LightingSystemFact(headlightBulbType == LightBulbType.GAS_DISCHARGE,
+                                 (highBeamOrientationLx < 35.0 || highBeamOrientationLx > 180.0))
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HIGH_BEAM_ORIENTATION", "GAS_DISCHARGE_OUT_OF_RANGE",
+            "Gasno svetlo: usmerenost " + $l.getHighBeamOrientationLx() + " lx van opsega 35–180 lx."
+        ));
+end
+
+rule "LIGHTS: Low-beam orientation exceeds 4 lx"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDate >= java.time.LocalDate.of(2012, 7, 1))
+        $l : LightingSystemFact(lowBeamOrientationLx > 4.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "LOW_BEAM_ORIENTATION", "EXCEEDS_4LX",
+            "Usmerenost kratkih svetala " + $l.getLowBeamOrientationLx() + " lx prelazi dozvoljenih 4 lx."
+        ));
+end
+
+// ── Position and parking lights ────────────────────────────────────────────────
+
+rule "LIGHTS: Front position-light intensity out of range (0.25–1.5 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(frontPositionLightIntensityM < 0.25 || frontPositionLightIntensityM > 1.5)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "FRONT_POSITION_LIGHT", "INTENSITY_OUT_OF_RANGE",
+            "Jačina prednjeg pozicionog svetla " + $l.getFrontPositionLightIntensityM() + " m van opsega 0.25–1.5 m."
+        ));
+end
+
+rule "LIGHTS: Rear position-light intensity out of range (0.35–1 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(rearPositionLightIntensityM < 0.35 || rearPositionLightIntensityM > 1.0)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "REAR_POSITION_LIGHT", "INTENSITY_OUT_OF_RANGE",
+            "Jačina zadnjeg pozicionog svetla " + $l.getRearPositionLightIntensityM() + " m van opsega 0.35–1 m."
+        ));
+end
+
+rule "LIGHTS: Parking-light intensity out of range (0.35–1.9 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(parkingLightIntensityM < 0.35 || parkingLightIntensityM > 1.9)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "PARKING_LIGHT", "INTENSITY_OUT_OF_RANGE",
+            "Jačina parkirnog svetla " + $l.getParkingLightIntensityM() + " m van opsega 0.35–1.9 m."
+        ));
+end
+
+rule "LIGHTS: Stop-light intensity out of range (0.35–1.5 m)"
+    salience 90
+    when
+        $l : LightingSystemFact(stopLightIntensityM < 0.35 || stopLightIntensityM > 1.5)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "STOP_LIGHT", "INTENSITY_OUT_OF_RANGE",
+            "Jačina stop svetla " + $l.getStopLightIntensityM() + " m van opsega 0.35–1.5 m."
+        ));
+end
+
+// ── Licence-plate light ────────────────────────────────────────────────────────
+
+rule "LIGHTS: Licence-plate light not operational"
+    salience 90
+    when
+        $l : LightingSystemFact(plateLightOperational == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "PLATE_LIGHT", "NOT_FUNCTIONAL",
+            "Svetlo zadnje registarske tablice ne svetli."
+        ));
+end
+
+// ── Third stop light (mandatory from 01.03.2011) ───────────────────────────────
+
+rule "LIGHTS: Missing third stop light (mandatory after 01.03.2011)"
+    salience 90
+    when
+        $v : Vehicle(firstRegistrationDateSerbia >= java.time.LocalDate.of(2011, 3, 1))
+        $l : LightingSystemFact(thirdStopLightPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "THIRD_STOP_LIGHT", "MISSING",
+            "Vozilo registrovano nakon 01.03.2011. nema treće stop svetlo na sredini."
+        ));
+end
+
+// ── Turn indicators ────────────────────────────────────────────────────────────
+
+rule "LIGHTS: Turn indicators not amber/yellow"
+    salience 90
+    when
+        $l : LightingSystemFact(turnIndicatorsAmber == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "TURN_INDICATOR", "WRONG_COLOUR",
+            "Pokazivači pravca nisu žute (ćilibarne) boje."
+        ));
+end
+
+rule "LIGHTS: Turn indicator frequency out of range (60–120 per minute)"
+    salience 90
+    when
+        $l : LightingSystemFact(turnIndicatorFrequencyPerMin < 60 || turnIndicatorFrequencyPerMin > 120)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "TURN_INDICATOR", "FREQUENCY_OUT_OF_RANGE",
+            "Učestalost treperanja pokazivača pravca " + $l.getTurnIndicatorFrequencyPerMin() +
+            "/min van dozvoljenog opsega 60–120/min."
+        ));
+end
+
+rule "LIGHTS: Hazard (simultaneous indicator) switch not functional"
+    salience 90
+    when
+        $l : LightingSystemFact(hazardSwitchFunctional == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "HAZARD_SWITCH", "NOT_FUNCTIONAL",
+            "Uređaj za istovremeno uključivanje pokazivača pravca (hazard) ne radi."
+        ));
+end
+
+rule "LIGHTS: Turn indicators not functional"
+    salience 90
+    when
+        $l : LightingSystemFact(turnIndicatorsFunctional == false)
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "TURN_INDICATOR", "NOT_FUNCTIONAL",
+            "Jedan ili više pokazivača pravca nisu funkcionalni."
+        ));
+end
+
+// ── Turn-indicator count vs vehicle length ─────────────────────────────────────
+
+// Vehicles <= 6 m: must have (2 front side + 2 rear) OR (2 front + 2 rear + 2 side) OR (2 front + 2 rear)
+rule "LIGHTS: Vehicle <=6m — insufficient turn indicator configuration"
+    salience 90
+    when
+        $v : Vehicle(lengthMetres <= 6.0)
+        $l : LightingSystemFact(
+            frontTurnIndicatorCount < 2 || rearTurnIndicatorCount < 2
+        )
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "TURN_INDICATOR", "INSUFFICIENT_COUNT_SHORT_VEHICLE",
+            "Vozilo ≤6 m nema propisanu konfiguraciju pokazivača pravca."
+        ));
+end
+
+// Vehicles > 6 m: must have (2 front side + 2 rear) OR (2 front + 2 rear)
+rule "LIGHTS: Vehicle >6m — insufficient turn indicator configuration"
+    salience 90
+    when
+        $v : Vehicle(lengthMetres > 6.0)
+        $l : LightingSystemFact(
+            frontTurnIndicatorCount < 2 || rearTurnIndicatorCount < 2
+        )
+    then
+        insert(InspectionIssue.of(
+            "LIGHTING", "TURN_INDICATOR", "INSUFFICIENT_COUNT_LONG_VEHICLE",
+            "Vozilo >6 m nema propisanu konfiguraciju pokazivača pravca."
+        ));
+end

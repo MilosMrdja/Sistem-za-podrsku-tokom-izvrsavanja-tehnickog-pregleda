@@ -1,0 +1,46 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.models.VehicleIdentification;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — VEHICLE IDENTIFICATION (VinProblem / IdentifikacijaProblem)
+//  Salience 100.
+//  Violations here result in PREKINUT (inspection halted).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "IDENT: VIN not readable"
+    salience 100
+    when
+        $v : VehicleIdentification(vinReadable == false)
+    then
+        insert(InspectionIssue.of(
+            "IDENTIFICATION", "VIN", "NOT_READABLE",
+            "VIN (broj šasije) nije čitljiv na vozilu."
+        ));
+end
+
+rule "IDENT: VIN does not match registration document"
+    salience 100
+    when
+        $v : VehicleIdentification(vinMatchesDocument == false)
+    then
+        insert(InspectionIssue.of(
+            "IDENTIFICATION", "VIN", "DOCUMENT_MISMATCH",
+            "VIN na vozilu se ne poklapa sa podacima iz saobraćajne dozvole."
+        ));
+end
+
+rule "IDENT: Vehicle data not in ABS database or data mismatch"
+    salience 100
+    when
+        $v : VehicleIdentification(existsInDatabase == false
+                      || engineCodeMatchesDatabase == false
+                      || brandMatchesDatabase == false
+                      || productionYearMatchesDatabase == false)
+    then
+        insert(InspectionIssue.of(
+            "IDENTIFICATION", "DATABASE", "ABS_MISMATCH",
+            "Podaci o vozilu ne postoje u bazi ABS-a ili se ne poklapaju (oznaka motora, marka, godina proizvodnje)."
+        ));
+end

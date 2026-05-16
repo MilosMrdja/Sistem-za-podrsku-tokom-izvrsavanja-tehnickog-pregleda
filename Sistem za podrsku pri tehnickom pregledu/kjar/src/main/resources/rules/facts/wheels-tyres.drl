@@ -1,0 +1,95 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.facts.TireFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+import sistem_tehnicki_pregled.model.enums.AxleId;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — MOVEMENT DEVICES (UredjajZaKretanjeNeispravan)
+//  Salience 90.
+//
+//  Rules check:
+//    1. Each tyre is individually homologated.
+//    2. Tyres on the same axle share identical construction type and load index.
+//    3. No wheel/tyre assembly has clearance or visible damage.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "MOVEMENT: Tyre not homologated"
+    salience 90
+    when
+        $t : TireFact(homologated == false)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "TYRE", "NOT_HOMOLOGATED",
+            "Pneumatik na poziciji " + $t.getWheelId() + " nije homologovan."
+        ));
+end
+
+rule "MOVEMENT: Wheel or tyre has play or damage"
+    salience 90
+    when
+        $t : TireFact(noPlayOrDamage == false)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "WHEEL", "PLAY_OR_DAMAGE",
+            "Točak/pneumatik na poziciji " + $t.getWheelId() + " ima zazore ili oštećenja."
+        ));
+end
+
+// Tyres on the same axle must have the same construction type
+rule "MOVEMENT: Front axle — mismatched tyre construction type"
+    salience 90
+    when
+        $left  : TireFact(axleId == AxleId.FRONT)
+        $right : TireFact(axleId == AxleId.FRONT, wheelId != $left.wheelId,
+                          constructionType != $left.constructionType)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "FRONT_AXLE_TYRES", "CONSTRUCTION_TYPE_MISMATCH",
+            "Pneumatici na prednjoj osovini imaju različitu vrstu konstrukcije: " +
+            $left.getConstructionType() + " vs " + $right.getConstructionType() + "."
+        ));
+end
+
+rule "MOVEMENT: Rear axle — mismatched tyre construction type"
+    salience 90
+    when
+        $left  : TireFact(axleId == AxleId.REAR)
+        $right : TireFact(axleId == AxleId.REAR, wheelId != $left.wheelId,
+                          constructionType != $left.constructionType)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "REAR_AXLE_TYRES", "CONSTRUCTION_TYPE_MISMATCH",
+            "Pneumatici na zadnjoj osovini imaju različitu vrstu konstrukcije: " +
+            $left.getConstructionType() + " vs " + $right.getConstructionType() + "."
+        ));
+end
+
+// Tyres on the same axle must have the same load index
+rule "MOVEMENT: Front axle — mismatched load index"
+    salience 90
+    when
+        $left  : TireFact(axleId == AxleId.FRONT)
+        $right : TireFact(axleId == AxleId.FRONT, wheelId != $left.wheelId,
+                          loadIndex != $left.loadIndex)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "FRONT_AXLE_TYRES", "LOAD_INDEX_MISMATCH",
+            "Pneumatici na prednjoj osovini imaju različite indekse nosivosti: " +
+            $left.getLoadIndex() + " vs " + $right.getLoadIndex() + "."
+        ));
+end
+
+rule "MOVEMENT: Rear axle — mismatched load index"
+    salience 90
+    when
+        $left  : TireFact(axleId == AxleId.REAR)
+        $right : TireFact(axleId == AxleId.REAR, wheelId != $left.wheelId,
+                          loadIndex != $left.loadIndex)
+    then
+        insert(InspectionIssue.of(
+            "WHEELS_TYRES", "REAR_AXLE_TYRES", "LOAD_INDEX_MISMATCH",
+            "Pneumatici na zadnjoj osovini imaju različite indekse nosivosti: " +
+            $left.getLoadIndex() + " vs " + $right.getLoadIndex() + "."
+        ));
+end

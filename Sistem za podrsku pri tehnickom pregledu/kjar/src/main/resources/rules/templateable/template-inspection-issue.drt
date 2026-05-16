@@ -1,0 +1,39 @@
+template header
+system
+component
+issue
+
+package rules;
+
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DROOLS TEMPLATE — vehicle_inspection_fail
+//
+//  Matches InspectionIssue facts produced by Level-1 detection rules and marks
+//  them as failed.  This template is expanded at build time; new rows can be
+//  added to the accompanying decision table without modifying DRL files.
+//
+//  Parameters:
+//    @{system}    — system name (e.g. BRAKE_SYSTEM, LIGHTING, ENGINE, OTHER)
+//    @{component} — component within the system (e.g. FLUID, LOW_BEAM)
+//    @{issue}     — fault code (e.g. LEAK, INTENSITY_OUT_OF_RANGE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+template "vehicle_inspection_fail"
+
+rule "Fail - @{system} - @{component} - @{issue}"
+salience 90
+when
+    $i : InspectionIssue(
+        system    == "@{system}",
+        component == "@{component}",
+        issue     == "@{issue}"
+    )
+then
+    modify($i) {
+        setPassed(false)
+    }
+end
+
+end template

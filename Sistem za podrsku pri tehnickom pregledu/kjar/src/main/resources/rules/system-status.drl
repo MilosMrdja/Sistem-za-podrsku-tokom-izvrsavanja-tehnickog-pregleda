@@ -1,0 +1,249 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+import sistem_tehnicki_pregled.model.models.SystemStatus;
+import java.util.List;
+import java.util.ArrayList;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 2 — SYSTEM STATUS AGGREGATION
+//  Salience 50 & 49 — fires after all Level-1 detection rules.
+//
+//  One SystemStatus instance per logical system is pre-inserted by the service.
+//  These rules set their `failed` flag and accumulate failure reasons.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ===============================================================================
+//  FIRST FAILURE INITIALIZATION (Salience 50)
+//  Fires when the first issue is detected for a system where failed == false.
+// ===============================================================================
+
+rule "STATUS: Aggregate brake system issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "BRAKE_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.BRAKE_SYSTEM, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate lighting issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "LIGHTING", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.LIGHTING, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate engine issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "ENGINE", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.ENGINE, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate exhaust system issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "EXHAUST_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.EXHAUST_SYSTEM, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate chassis & suspension issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "CHASSIS_SUSPENSION", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.CHASSIS_SUSPENSION, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate wheels & tyres issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "WHEELS_TYRES", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.WHEELS_TYRES, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate electrical system issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "ELECTRICAL_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.ELECTRICAL_SYSTEM, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+rule "STATUS: Aggregate mandatory equipment issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "MANDATORY_EQUIPMENT", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.MANDATORY_EQUIPMENT, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
+
+// ===============================================================================
+//  ADDITIONAL FAILURES ACCUMULATION (Salience 49)
+//  Continues to collect distinct descriptions after the system is already failed.
+// ===============================================================================
+
+rule "STATUS: Accumulate additional brake failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "BRAKE_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.BRAKE_SYSTEM, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional lighting failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "LIGHTING", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.LIGHTING, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional engine failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "ENGINE", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.ENGINE, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional exhaust failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "EXHAUST_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.EXHAUST_SYSTEM, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional chassis & suspension failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "CHASSIS_SUSPENSION", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.CHASSIS_SUSPENSION, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional wheels & tyres failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "WHEELS_TYRES", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.WHEELS_TYRES, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional electrical failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "ELECTRICAL_SYSTEM", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.ELECTRICAL_SYSTEM, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
+rule "STATUS: Accumulate additional mandatory equipment failures"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "MANDATORY_EQUIPMENT", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.MANDATORY_EQUIPMENT, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end

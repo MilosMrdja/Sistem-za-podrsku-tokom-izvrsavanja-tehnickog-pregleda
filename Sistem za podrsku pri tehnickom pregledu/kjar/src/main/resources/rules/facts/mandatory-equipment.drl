@@ -1,0 +1,60 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.facts.MandatoryEquipmentFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+rule "EQUIPMENT: Spare wheel missing"
+    salience 90
+    when
+        $eq : MandatoryEquipmentFact(spareWheelPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "MANDATORY_EQUIPMENT", "EQUIPMENT", "SPARE_WHEEL_MISSING",
+            "Nedostaje rezervni točak."
+        ));
+end
+
+rule "EQUIPMENT: Warning triangle missing"
+    salience 90
+    when
+        $eq : MandatoryEquipmentFact(warningTrianglePresent == false)
+    then
+        insert(InspectionIssue.of(
+            "MANDATORY_EQUIPMENT", "EQUIPMENT", "WARNING_TRIANGLE_MISSING",
+            "Nedostaje sigurnosni trougao."
+        ));
+end
+
+rule "EQUIPMENT: First-aid kit missing"
+    salience 90
+    when
+        $eq : MandatoryEquipmentFact(firstAidKitPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "MANDATORY_EQUIPMENT", "EQUIPMENT", "FIRST_AID_MISSING",
+            "Nedostaje komplet prve pomoći."
+        ));
+end
+
+rule "EQUIPMENT: Tow equipment missing"
+    salience 90
+    when
+        $eq : MandatoryEquipmentFact(towEquipmentPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "MANDATORY_EQUIPMENT", "EQUIPMENT", "TOW_EQUIPMENT_MISSING",
+            "Nedostaje uže ili poluga za vuču."
+        ));
+end
+
+rule "EQUIPMENT: Reflective vest missing"
+    salience 90
+    when
+        $eq : MandatoryEquipmentFact(reflectiveVestPresent == false)
+    then
+        insert(InspectionIssue.of(
+            "MANDATORY_EQUIPMENT", "EQUIPMENT", "REFLECTIVE_VEST_MISSING",
+            "Nedostaje svetloodbojni prsluk."
+        ));
+end
+

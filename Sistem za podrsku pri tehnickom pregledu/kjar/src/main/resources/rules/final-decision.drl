@@ -1,0 +1,231 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.models.InspectionIssue
+import sistem_tehnicki_pregled.model.models.SystemStatus;
+import sistem_tehnicki_pregled.model.models.FinalDecision;
+import sistem_tehnicki_pregled.model.enums.InspectionResult;
+import sistem_tehnicki_pregled.model.models.InspectionConditions;
+import sistem_tehnicki_pregled.model.models.VehicleIdentification;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 3 — FINAL DECISION
+//  Salience 10 — fires last, after Levels 1 and 2 are fully resolved.
+//
+//  Priority (highest wins — only ONE result is set):
+//    1. NIJE_ZAPOCET  — pre-inspection conditions not met
+//    2. PREKINUT      — VIN / identification problem
+//    3. NIJE_PROSAO   — any system failed
+//    4. IDENTIFICATION_PASSED
+//    5. PRECONDITIONS_PASSED
+//    6. PROSAO        — no failures at all
+//
+//  The `resolved` flag prevents multiple rules from overwriting the result.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "FINAL: Inspection not started — pre-inspection conditions violated"
+    salience 30        // highest priority within Level 3
+    when
+        $d    : FinalDecision(resolved == false)
+        exists   InspectionIssue(system == "PRE_INSPECTION", passed == false)
+    then
+
+        modify($d){
+
+          setResult(InspectionResult.NIJE_ZAPOCET),
+          setPrimaryReason("Uslovi za otpočinjanje tehničkog pregleda nisu ispunjeni."),
+          setResolved(true)
+        };
+end
+
+rule "FINAL: Inspection halted — vehicle identification problem"
+    salience 20
+    when
+        $d    : FinalDecision(resolved == false)
+        exists   InspectionIssue(system == "IDENTIFICATION", passed == false)
+    then
+
+        modify($d){
+                setResult(InspectionResult.PREKINUT),
+                setPrimaryReason("Problem sa identifikacijom vozila (VIN ili podaci u bazi)."),
+                setResolved(true)
+        };
+end
+
+rule "FINAL: Vehicle failed — one or more systems failed"
+    salience 10
+    when
+        $d : FinalDecision(resolved == false)
+        (
+            SystemStatus(systemName == SystemStatus.BRAKE_SYSTEM, failed == true)
+         or SystemStatus(systemName == SystemStatus.LIGHTING,     failed == true)
+         or SystemStatus(systemName == SystemStatus.ENGINE,        failed == true)
+         or SystemStatus(systemName == SystemStatus.MANDATORY_EQUIPMENT,         failed == true)
+         or SystemStatus(systemName == SystemStatus.ELECTRICAL_SYSTEM,         failed == true)
+         or SystemStatus(systemName == SystemStatus.CHASSIS_SUSPENSION,         failed == true)
+         or SystemStatus(systemName == SystemStatus.WHEELS_TYRES,         failed == true)
+         or SystemStatus(systemName == SystemStatus.EXHAUST_SYSTEM,         failed == true)
+        )
+    then
+
+        modify($d){
+            setResult(InspectionResult.NIJE_PROSAO),
+            setPrimaryReason("Ustanovljeni su nedostaci koji onemogućavaju prolazak tehničkog pregleda."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Identification passed — vehicle successfully identified"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        exists VehicleIdentification()
+        not InspectionIssue(passed == false) // Ne postoji objekat InspectionIssue koji ima passed=true
+        not SystemStatus()
+    then
+        modify($d){
+            setResult(InspectionResult.IDENTIFICATION_PASSED),
+            setPrimaryReason("Identifikacija vozila uspešno izvršena. Podaci se poklapaju."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Preconditions passed — vehicle ready for technical inspection"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        exists InspectionConditions()
+        not InspectionIssue(passed == false)
+        not SystemStatus()
+    then
+        modify($d){
+            setResult(InspectionResult.PRECONDITIONS_PASSED),
+            setPrimaryReason("Preduslovi uspešno ispunjeni. Vozilo može pristupiti pregledu sistema."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Brake system check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.BRAKE_SYSTEM, failed == false)
+        not InspectionIssue(system == "BRAKE_SYSTEM", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.BRAKE_FLUID_PASSED),
+            setPrimaryReason("Kočioni sistem je uspešno testiran i ispravan."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Lighting check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.LIGHTING, failed == false)
+        not InspectionIssue(system == "LIGHTING", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.LIGHTING_SYSTEM_PASSED),
+            setPrimaryReason("Svetlosna signalizacija i uređaji za osvetljavanje su ispravni."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Engine check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.ENGINE, failed == false)
+        not InspectionIssue(system == "ENGINE", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.ENGINE_SYSTEM_PASSED),
+            setPrimaryReason("Pogonski agregat i prenosni mehanizam su uspešno testirani i ispravni."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Exhaust system check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.EXHAUST_SYSTEM, failed == false)
+        not InspectionIssue(system == "EXHAUST_SYSTEM", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.EXHAUST_SYSTEM_PASSED),
+            setPrimaryReason("Izduvni sistem i emisija izduvnih gasova (eko-test) ispunjavaju propisane norme."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Chassis suspension check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.CHASSIS_SUSPENSION, failed == false)
+        not InspectionIssue(system == "CHASSIS_SUSPENSION", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.CHASSIS_SUSPENSION_PASSED),
+            setPrimaryReason("Šasija i elementi oslanjanja (vešanja) su bez oštećenja i lufta."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Wheels and tyres check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.WHEELS_TYRES, failed == false)
+        not InspectionIssue(system == "WHEELS_TYRES", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.WHEELS_TYRES_PASSED),
+            setPrimaryReason("Točkovi i pneumatici su ispravni, homologovani i pravilno usklađeni po osovinama."),
+            setResolved(true)
+        };
+end
+
+rule "FINAL: Electrical system check passed"
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.ELECTRICAL_SYSTEM, failed == false)
+        not InspectionIssue(system == "ELECTRICAL_SYSTEM", passed == false)
+    then
+        modify($d){
+            setResult(InspectionResult.ELECTRICAL_SYSTEM_PASSED),
+            setPrimaryReason("Električne instalacije i akumulator su bezbedni i pravilno osigurani."),
+            setResolved(true)
+        };
+end
+
+//rule "FINAL: Mandatory equipment check passed"
+//    salience 6
+//    when
+//        $d : FinalDecision(resolved == false)
+//        $s : SystemStatus(systemName == SystemStatus.MANDATORY_EQUIPMENT, failed == false)
+//        not InspectionIssue(system == "MANDATORY_EQUIPMENT", passed == false)
+//    then
+//        modify($d){
+//            setResult(InspectionResult.MANDATORY_EQUIPMENT_PASSED),
+//            setPrimaryReason("Sva zakonski propisana obavezna oprema se nalazi u vozilu."),
+//            setResolved(true)
+//        };
+//end
+
+rule "FINAL: Vehicle passed — no failures detected"
+    salience 5         // lowest — only fires if nothing else has resolved the decision
+    when
+        $d : FinalDecision(resolved == false)
+        not InspectionIssue(passed == false)
+    then
+
+        modify($d){
+                setResult(InspectionResult.PROSAO),
+                setPrimaryReason("Vozilo ispunjava sve tehničke uslove."),
+                setResolved(true)
+        };
+end

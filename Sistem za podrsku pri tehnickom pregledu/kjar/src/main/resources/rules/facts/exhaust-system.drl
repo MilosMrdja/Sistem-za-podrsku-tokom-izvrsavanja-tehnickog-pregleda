@@ -1,0 +1,85 @@
+package rules;
+
+import sistem_tehnicki_pregled.model.entities.Vehicle;
+import sistem_tehnicki_pregled.model.facts.ExhaustSystemFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+import sistem_tehnicki_pregled.model.enums.FuelType;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  LEVEL 1 — EXHAUST SYSTEM (IzduvniSistemNeispravan)
+//  Salience 90.
+//
+//  Diesel thresholds (absorption coefficient):
+//    - Year > 2015                           : absorption > 1.5
+//    - Year <= 2015 AND power < 73.5 kW      : absorption > 3.22
+//    - Year <= 2015 AND power >= 73.5 kW     : absorption > 2.44
+//
+//  Petrol (OTO) thresholds (CO %):
+//    - Production date before 01.01.2015     : CO > 4.5 %
+//    - Production date from 01.01.2015       : CO > 3.5 %
+// ═══════════════════════════════════════════════════════════════════════════════
+
+rule "EXHAUST: Diesel post-2015 — absorption too high"
+    salience 90
+    when
+        $v : Vehicle(fuelType == FuelType.DIESEL, productionDate.getYear() > 2015)
+        $e : ExhaustSystemFact(dieselAbsorptionCoefficient > 1.5)
+    then
+        insert(InspectionIssue.of(
+            "EXHAUST_SYSTEM", "EXHAUST", "ABSORPTION_EXCEEDS_LIMIT",
+            "Diesel vozilo (god. " + $v.getProductionDate().getYear() + "): koeficijent apsorpcije " +
+            $e.getDieselAbsorptionCoefficient() + " prelazi dozvoljenih 1.5."
+        ));
+end
+
+rule "EXHAUST: Diesel pre/2015, low power — absorption too high"
+    salience 90
+    when
+        $v : Vehicle(fuelType == FuelType.DIESEL, productionDate.getYear() <= 2015, enginePowerKw < 73.5)
+        $e : ExhaustSystemFact(dieselAbsorptionCoefficient > 3.22)
+    then
+        insert(InspectionIssue.of(
+            "EXHAUST_SYSTEM", "EXHAUST", "ABSORPTION_EXCEEDS_LIMIT",
+            "Diesel vozilo (god. " + $v.getProductionDate().getYear() + ", snaga < 73.5 kW): koeficijent apsorpcije " +
+            $e.getDieselAbsorptionCoefficient() + " prelazi dozvoljenih 3.22."
+        ));
+end
+
+rule "EXHAUST: Diesel pre/2015, high power — absorption too high"
+    salience 90
+    when
+        $v : Vehicle(fuelType == FuelType.DIESEL, productionDate.getYear() <= 2015, enginePowerKw >= 73.5)
+        $e : ExhaustSystemFact(dieselAbsorptionCoefficient > 2.44)
+    then
+        insert(InspectionIssue.of(
+            "EXHAUST_SYSTEM", "EXHAUST", "ABSORPTION_EXCEEDS_LIMIT",
+            "Diesel vozilo (god. " + $v.getProductionDate().getYear() + ", snaga >= 73.5 kW): koeficijent apsorpcije " +
+            $e.getDieselAbsorptionCoefficient() + " prelazi dozvoljenih 2.44."
+        ));
+end
+
+rule "EXHAUST: Petrol pre-2015 — CO too high"
+    salience 90
+    when
+        $v : Vehicle(fuelType == FuelType.PETROL,
+                         productionDate.getYear() < 2015)
+        $e : ExhaustSystemFact(petrolCoPercent > 4.5)
+    then
+        insert(InspectionIssue.of(
+            "EXHAUST_SYSTEM", "EXHAUST", "CO_EXCEEDS_LIMIT",
+            "OTO motor (pre 01.01.2015): CO " + $e.getPetrolCoPercent() + "% prelazi dozvoljenih 4.5%."
+        ));
+end
+
+rule "EXHAUST: Petrol from-2015 — CO too high"
+    salience 90
+    when
+        $v : Vehicle(fuelType == FuelType.PETROL,
+                         productionDate.getYear() >= 2015)
+        $e : ExhaustSystemFact(petrolCoPercent > 3.5)
+    then
+        insert(InspectionIssue.of(
+            "EXHAUST_SYSTEM", "EXHAUST", "CO_EXCEEDS_LIMIT",
+            "OTO motor (od 01.01.2015): CO " + $e.getPetrolCoPercent() + "% prelazi dozvoljenih 3.5%."
+        ));
+end

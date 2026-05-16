@@ -1,0 +1,26 @@
+package rules;
+// ── Electrical installation ────────────────────────────────────────────────────
+import sistem_tehnicki_pregled.model.facts.ElectricalInstallationFact;
+import sistem_tehnicki_pregled.model.models.InspectionIssue;
+
+rule "ELECTRICAL: Wiring not protected from mechanical damage"
+    salience 90
+    when
+        $e : ElectricalInstallationFact(wiringProtected == false)
+    then
+        insert(InspectionIssue.of(
+            "ELECTRICAL_SYSTEM", "ELECTRICAL_WIRING", "NOT_PROTECTED",
+            "Električna instalacija nije izvedena tako da su vodovi zaštićeni od mehaničkog habanja, zasecanja ili presecanja."
+        ));
+end
+
+rule "ELECTRICAL: Battery not properly secured"
+    salience 90
+    when
+        $e : ElectricalInstallationFact(batterySecured == false)
+    then
+        insert(InspectionIssue.of(
+            "ELECTRICAL_SYSTEM", "BATTERY", "NOT_SECURED",
+            "Akumulator na vozilu nije dobro pričvršćen."
+        ));
+end

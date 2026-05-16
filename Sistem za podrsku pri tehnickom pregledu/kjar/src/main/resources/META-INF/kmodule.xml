@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
+
+    <!--
+        KieBase: InspectionKBase
+        Scans the "rules" package inside the kjar resources for all .drl and .drt files.
+        Files are executed in natural alphabetical order — prefixed numerically (01-, 02-, …)
+        to guarantee the correct salience-based level ordering:
+            01-08  → Level 1: Detection rules      (salience 90–100)
+            20     → Level 2: System status         (salience 49–50)
+            30     → Level 3: Final decision        (salience 5–30)
+    -->
+    <kbase name="InspectionKBase" packages="rules">
+        <ksession name="InspectionKSession" type="stateful" default="true"/>
+    </kbase>
+
+</kmodule>
