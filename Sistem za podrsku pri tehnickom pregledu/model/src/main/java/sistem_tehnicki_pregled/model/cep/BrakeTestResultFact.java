@@ -23,6 +23,7 @@ import sistem_tehnicki_pregled.model.enums.WheelId;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BrakeTestResultFact {
+    private Long inspectionId;
 
     /** Which wheel this result belongs to. */
     private WheelId wheelId;
@@ -31,12 +32,17 @@ public class BrakeTestResultFact {
     private AxleId axleId;
 
     /** Maximum braking force recorded during the test window (daN). */
-    private double maxForce;
+    private Double maxForce;
 
     /**
      * Disc / drum ovality expressed as a percentage.
      * Formula: (max(F) - min(F)) / max(F) * 100
      * Limit: must be < 20 %.
      */
-    private double ovalityPercent;
+    private Double ovalityPercent;
+
+    public static BrakeTestResultFact of(Long id, WheelId wheelId, AxleId axleId, Double maxForce, Double ovalityPercent) {
+        return BrakeTestResultFact.builder().inspectionId(id).wheelId(wheelId).axleId(axleId).maxForce(maxForce).ovalityPercent(ovalityPercent).build();
+    }
+
 }

@@ -10,7 +10,8 @@
             20     → Level 2: System status         (salience 49–50)
             30     → Level 3: Final decision        (salience 5–30)
     -->
-    <kbase name="InspectionKBase" packages="rules">
+    <kbase name="InspectionKBase" packages="rules, rules.cep"
+           eventProcessingMode="stream">
         <ksession name="InspectionKSession" type="stateful" default="true"/>
     </kbase>
 

@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.kie.api.definition.type.Role;
+import org.kie.api.definition.type.Role.Type;
+import org.kie.api.definition.type.Timestamp;
 import sistem_tehnicki_pregled.model.enums.AxleId;
 import sistem_tehnicki_pregled.model.enums.WheelId;
 
@@ -18,10 +21,14 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Role(Type.EVENT)
+@Timestamp("timestamp")
 public class BrakeMeasurementEvent {
 
+    private Long inspectionId;
+
     /** UTC timestamp of the measurement. */
-    private Instant timestamp;
+    private long timestamp;
 
     /** Which wheel produced this reading. */
     private WheelId wheelId;
@@ -30,5 +37,5 @@ public class BrakeMeasurementEvent {
     private AxleId axleId;
 
     /** Measured braking force in decanewtons (daN). */
-    private double brakeForce;
+    private Double brakeForce;
 }

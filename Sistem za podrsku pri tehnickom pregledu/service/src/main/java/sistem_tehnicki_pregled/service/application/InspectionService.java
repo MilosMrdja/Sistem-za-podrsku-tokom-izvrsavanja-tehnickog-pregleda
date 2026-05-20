@@ -3,6 +3,9 @@ package sistem_tehnicki_pregled.service.application;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieSession;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import sistem_tehnicki_pregled.model.entities.Inspection;
 import sistem_tehnicki_pregled.model.entities.Vehicle;
@@ -38,6 +41,7 @@ public class InspectionService {
     private final InspectionResponseFactory responseFactory;
     private final VehicleRepository vehicleRepository;
     private final InspectionRepository inspectionRepository;
+    private final KafkaTemplate<String, Long> kafkaTemplate;
 
     public InspectionResponseDTO createInspection(VehicleDTO vehicleInfoRequest) {
         if (vehicleRepository.existsByVin(vehicleInfoRequest.getVin())) {
@@ -214,6 +218,40 @@ public class InspectionService {
 
         return responseFactory.build(vehicle, decision, electricalSystem);
     }
+
+    public InspectionResponseDTO startBrakeTest(Long inspectionId) {
+
+        Inspection inspection = getActiveInspection(
+                inspectionId,
+                InspectionResult.CHASSIS_SUSPENSION_PASSED,
+                "Uslovi za proveru kočnica nisu ispunjeni, mehanički delovi se moraju proveriti"
+        );
+
+        inspection.setResult(InspectionResult.BRAKE_TEST_RUNNING);
+        inspectionRepository.save(inspection);
+
+        kafkaTemplate.send("start-brake-test", inspectionId);
+
+        return responseFactory.build(
+                inspection.getVehicle(),
+                InspectionResult.BRAKE_TEST_RUNNING,
+                LocalDateTime.now(),
+                inspectionId
+        );
+    }
+
+    @KafkaListener(topics = "brake-test-finished")
+    public void finish(Long inspectionId) {
+
+        Inspection ins = inspectionRepository.findById(inspectionId).orElseThrow();
+
+        if(ins.getResult() != InspectionResult.NIJE_PROSAO){
+            ins.setResult(InspectionResult.BRAKE_TEST_PASSED);
+        }
+
+        inspectionRepository.save(ins);
+    }
+
     public InspectionResponseDTO checkLightingSystem(LightingSystemDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.ELECTRICAL_SYSTEM_PASSED,
                 "Uslovi potrebni za proveru svetala nisu ispunjeni, elektroinstalacija se mora proveriti");

@@ -6,9 +6,11 @@ import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.model.KieModuleModel;
+import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.definition.KiePackage;
 import org.kie.api.definition.rule.Rule;
 import org.kie.api.runtime.KieContainer;
+import org.kie.api.runtime.KieSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,7 +44,9 @@ public class DroolsConfig {
 
         kmoduleModel.newKieBaseModel("InspectionKBase")
                 .addPackage("rules")
+                .addPackage("rules.cep")
                 .setDefault(true)
+                .setEventProcessingMode(EventProcessingOption.STREAM)
                 .newKieSessionModel("InspectionKSession")
                 .setDefault(true);
 
@@ -95,6 +99,11 @@ public class DroolsConfig {
         kfs.write("src/main/resources/rules/final-decision.drl",
                 ks.getResources().newClassPathResource("rules/final-decision.drl"));
 
+        kfs.write(
+                "src/main/resources/rules/cep/brake-measurement-event.drl",
+                ks.getResources().newClassPathResource("rules/cep/brake-measurement-event.drl")
+        );
+
         KieBuilder builder = ks.newKieBuilder(kfs).buildAll();
 
         KieContainer container = ks.newKieContainer(builder.getKieModule().getReleaseId());
@@ -106,5 +115,10 @@ public class DroolsConfig {
             }
         }
         return container;
+    }
+
+    @Bean
+    public KieSession kieSession(KieContainer container) {
+        return container.newKieSession("InspectionKSession");
     }
 }

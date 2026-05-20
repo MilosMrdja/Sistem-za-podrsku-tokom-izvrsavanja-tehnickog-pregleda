@@ -24,24 +24,25 @@ import sistem_tehnicki_pregled.model.enums.AxleId;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AxleBrakeResultFact {
+    private Long inspectionId;
 
     private AxleId axleId;
 
     /** Peak force of the left wheel (daN). */
-    private double leftMaxForce;
+    private Double leftMaxForce;
 
     /** Peak force of the right wheel (daN). */
-    private double rightMaxForce;
+    private Double rightMaxForce;
 
     /**
      * Imbalance between left and right wheel braking forces (%).
      * Limit: < 20 %.
      */
-    private double imbalancePercent;
+    private Double imbalancePercent;
 
     /**
      * Overall service-brake efficiency for this axle (%).
      * Limits: >= 50 % (pre-2017), >= 58 % (post-2017).
      */
-    private double brakingEfficiencyPercent;
+    private Double brakingEfficiencyPercent;
 }

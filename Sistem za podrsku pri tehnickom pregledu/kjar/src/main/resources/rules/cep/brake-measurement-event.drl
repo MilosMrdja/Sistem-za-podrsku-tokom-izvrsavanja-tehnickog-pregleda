@@ -1,0 +1,101 @@
+package rules.cep;
+
+dialect "mvel"
+
+import sistem_tehnicki_pregled.model.cep.BrakeMeasurementEvent
+import sistem_tehnicki_pregled.model.enums.WheelId
+import sistem_tehnicki_pregled.model.enums.AxleId
+import sistem_tehnicki_pregled.model.models.InspectionIssue
+import sistem_tehnicki_pregled.model.cep.BrakeTestResultFact
+import sistem_tehnicki_pregled.model.facts.BrakeFailureFact
+
+
+rule "Invalid wheel axle mapping"
+when
+    $e : BrakeMeasurementEvent(
+        (wheelId == WheelId.FL || wheelId == WheelId.FR)
+        && axleId != AxleId.FRONT
+    )
+    or
+    $e : BrakeMeasurementEvent(
+        (wheelId == WheelId.RL || wheelId == WheelId.RR)
+        && axleId != AxleId.REAR
+    )
+then
+    insert(
+        InspectionIssue.of(
+            "WHEEL_TIRE",
+            "WHEEL_MAPPING",
+            "WHEEL_TIRE_INVALID",
+            "Točak i osovina se ne poklapaju"
+        )
+    );
+end
+
+
+rule "Wheel aggregation"
+when
+    $e : BrakeMeasurementEvent($wheelId : wheelId)
+
+    $max : Double() from accumulate(
+        BrakeMeasurementEvent(wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
+        max($bf)
+    )
+
+    $min : Double() from accumulate(
+        BrakeMeasurementEvent(wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
+        min($bf)
+    )
+then
+    insert(
+        BrakeTestResultFact.of(
+            $e.inspectionId,
+            $wheelId,
+            ($wheelId == WheelId.FL || $wheelId == WheelId.FR)
+                ? AxleId.FRONT
+                : AxleId.REAR,
+            $max,
+            ($max != 0 ? (($max - $min) / $max) * 100.0 : 0.0)
+        )
+    );
+end
+
+
+rule "Brake force insufficient"
+when
+    $r : BrakeTestResultFact(maxForce < 100)
+then
+    insert(
+        BrakeFailureFact.of(
+        $r.inspectionId,
+        "OVALITY_" + $r.wheelId
+        ));
+end
+
+
+rule "Axle imbalance"
+when
+    $l : BrakeTestResultFact(wheelId == WheelId.FL, $lf : maxForce)
+    $r : BrakeTestResultFact(wheelId == WheelId.FR, $rf : maxForce)
+
+    eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 20)
+then
+    insert(
+        BrakeFailureFact.of(
+            $l.inspectionId,
+            "IMBALANCE_AXLE"
+        )
+    );
+end
+
+
+rule "Ovality failure"
+when
+    $r : BrakeTestResultFact(ovalityPercent > 20)
+then
+    insert(
+        BrakeFailureFact.of(
+        $r.inspectionId,
+        "OVALITY_" + $r.wheelId
+        ));
+end

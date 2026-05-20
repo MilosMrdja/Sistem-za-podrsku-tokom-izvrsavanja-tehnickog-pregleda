@@ -1,0 +1,329 @@
+@startuml model-module-class-diagram
+' model modul — UML dijagram klasa (refaktorisano)
+' Mixed EN/SR | Java asocijacije (puna linija) + domenske veze između faktova (isprekidana)
+' Render: https://www.plantuml.com/plantuml
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 35
+
+title model modul — UML dijagram klasa\n(sistem_tehnicki_pregled.model)
+
+legend right
+  |= Linija |= Značenje |
+  | <color:#0000FF>━━━</color> | Java asocijacija (polje u klasi) |
+  | <color:#888888>┄┄┄</color> | Domenska veza između faktova |
+  | <<u sesiji>> | Zajedno u KieSession (InspectionService) |
+  | <<u pravilima>> | Spojeno u DRL when klauzuli |
+  | <<proizvodi>> | Pravilo kreira InspectionIssue |
+  | <<agregira>> | Upoređivanje / CEP obrada |
+  | <<precedes>> | Redosled koraka pregleda |
+endlegend
+
+' ═══════════════════════════════════════════════════════════════════════════
+package "entities" <<Frame>> #E8F4FD {
+  class Vehicle <<Entity>> {
+    - id : Long
+    - vin : String
+    - engineCode : String
+    - registrationPlate : String
+    - brand : String
+    - model : String
+    - vehicleType : VehicleType
+    - fuelType : FuelType
+    - productionDate : LocalDate
+    - firstRegistrationDate : LocalDate
+    - firstRegistrationDateSerbia : LocalDate
+    - maxAllowedMassKg : Double
+    - frontAxleLoadKg : Double
+    - rearAxleLoadKg : Double
+    - enginePowerKw : Double
+    - lengthMetres : Double
+    - createdAt : LocalDateTime
+  }
+
+  class Inspection <<Entity>> {
+    - id : Long
+    - vehicle : Vehicle
+    - result : InspectionResult
+    - startedAt : LocalDateTime
+    - finishedAt : LocalDateTime
+    - resolved : boolean
+  }
+}
+
+package "enums" <<Frame>> #FFF8E8 {
+  enum InspectionResult {
+    PROSAO
+    NIJE_PROSAO
+    PREKINUT
+    NIJE_ZAPOCET
+    CREATED
+    PRECONDITIONS_PASSED
+    IDENTIFICATION_PASSED
+    BRAKE_FLUID_PASSED
+    EXHAUST_SYSTEM_PASSED
+    LIGHTING_SYSTEM_PASSED
+    ENGINE_SYSTEM_PASSED
+    CHASSIS_SUSPENSION_PASSED
+    WHEELS_TYRES_PASSED
+    ELECTRICAL_SYSTEM_PASSED
+    MANDATORY_EQUIPMENT_PASSED
+  }
+  enum FuelType { DIESEL PETROL GAS }
+  enum VehicleType { M1 M2 M3 }
+  enum AxleId { FRONT REAR }
+  enum WheelId { FL FR RL RR }
+  enum LightBulbType {
+    NON_HALOGEN
+    HALOGEN_SINGLE_FILAMENT
+    HALOGEN_DUAL_FILAMENT
+    GAS_DISCHARGE
+  }
+}
+
+package "models" <<Frame>> #E8FDE8 {
+  class VehicleIdentification {
+    - vinReadable : boolean
+    - vinMatchesDocument : boolean
+    - engineCodeMatchesDatabase : boolean
+    - brandMatchesDatabase : boolean
+    - productionYearMatchesDatabase : boolean
+    - existsInDatabase : boolean
+  }
+  class InspectionConditions {
+    - vehicleClean : boolean
+    - vehicleOperational : boolean
+    - notOverloaded : boolean
+    - registeredInSerbia : boolean
+    - registrationActive : boolean
+    - bothPlatesPresent : boolean
+    - noCorrosionHoles : boolean
+  }
+  class FinalDecision {
+    - result : InspectionResult
+    - decidedAt : LocalDateTime
+    - primaryReason : String
+    - resolved : boolean
+  }
+  class SystemStatus {
+    {static} + BRAKE_SYSTEM : String
+    {static} + LIGHTING : String
+    {static} + ENGINE : String
+    {static} + MANDATORY_EQUIPMENT : String
+    {static} + ELECTRICAL_SYSTEM : String
+    {static} + WHEELS_TYRES : String
+    {static} + CHASSIS_SUSPENSION : String
+    {static} + EXHAUST_SYSTEM : String
+    - systemName : String
+    - failed : boolean
+    - failureReasons : List<String>
+    + addFailureReason(reason : String) : void
+  }
+  class InspectionIssue {
+    - system : String
+    - component : String
+    - issue : String
+    - passed : boolean
+    - description : String
+    {static} + of(...) : InspectionIssue
+  }
+}
+
+package "facts" <<Frame>> #FDE8F4 {
+  note as FactNote
+    **Veze između faktova**
+    • Nema Java polja između klasa faktova
+    • Veze su: DRL pravila, KieSession, CEP, tok pregleda
+  end note
+
+  class BrakeFluidFact {
+    - moisturePercent : Double
+    - boilingPointCelsius : Double
+    - systemLeaking : Boolean
+  }
+  class ExhaustSystemFact {
+    - dieselAbsorptionCoefficient : Double
+    - petrolCoPercent : Double
+  }
+  class LightingSystemFact {
+    - lowBeamIntensityM : double
+    - highBeamIntensityM : double
+    - frontFogLightIntensityM : double
+    - rearFogLightIntensityM : double
+    - frontPositionLightIntensityM : double
+    - rearPositionLightIntensityM : double
+    - parkingLightIntensityM : double
+    - stopLightIntensityM : double
+    - headlightBulbType : LightBulbType
+    - highBeamOrientationLx : double
+    - lowBeamOrientationLx : double
+    - reversingLightsWhite : boolean
+    - plateLightOperational : boolean
+    - thirdStopLightPresent : boolean
+    - turnIndicatorsAmber : boolean
+    - turnIndicatorFrequencyPerMin : int
+    - hazardSwitchFunctional : boolean
+    - turnIndicatorsFunctional : boolean
+    - frontSideTurnIndicatorCount : int
+    - frontTurnIndicatorCount : int
+    - rearTurnIndicatorCount : int
+    - sideTurnIndicatorCount : int
+  }
+  class DriveSystemFact {
+    - engineMountsIntact : boolean
+    - noEngineFluidLeak : boolean
+    - ignitionSystemIntact : boolean
+    - fuelSupplySecured : boolean
+    - noFuelLeak : boolean
+    - transmissionSafeForSingleHandOperation : boolean
+  }
+  class SuspensionSystemFact {
+    - armsIntact : boolean
+    - forksIntact : boolean
+    - stabilizersIntact : boolean
+    - jointsIntact : boolean
+    - shockAbsorbersIntact : boolean
+    - springsIntact : boolean
+  }
+  class TireFact {
+    - wheelId : WheelId
+    - axleId : AxleId
+    - widthMm : int
+    - aspectRatioPercent : int
+    - rimDiameterInches : int
+    - loadIndex : int
+    - constructionType : String
+    - speedRating : String
+    - homologated : boolean
+    - noPlayOrDamage : boolean
+  }
+  class MandatoryEquipmentFact {
+    - spareWheelPresent : boolean
+    - warningTrianglePresent : boolean
+    - firstAidKitPresent : boolean
+    - towEquipmentPresent : boolean
+    - reflectiveVestPresent : boolean
+  }
+  class ElectricalInstallationFact {
+    - wiringProtected : boolean
+    - batterySecured : boolean
+  }
+}
+
+package "cep" <<Frame>> #F0E8FD {
+  note top of cep
+    CEP — kočioni test (BrakeCepProcessor)
+  end note
+  class BrakeMeasurementEvent {
+    - timestamp : Instant
+    - wheelId : WheelId
+    - axleId : AxleId
+    - brakeForce : double
+  }
+  class BrakeTestResultFact {
+    - wheelId : WheelId
+    - axleId : AxleId
+    - maxForce : double
+    - ovalityPercent : double
+  }
+  class AxleBrakeResultFact {
+    - axleId : AxleId
+    - leftMaxForce : double
+    - rightMaxForce : double
+    - imbalancePercent : double
+    - brakingEfficiencyPercent : double
+  }
+}
+
+' ═══════════════════════════════════════════════════════════════════════════
+' JAVA ASOCIJACIJE (puna linija)
+' ═══════════════════════════════════════════════════════════════════════════
+
+Inspection "0..*" --> "1" Vehicle : vehicle
+Inspection --> InspectionResult : result
+Vehicle --> VehicleType : vehicleType
+Vehicle --> FuelType : fuelType
+FinalDecision --> InspectionResult : result
+
+LightingSystemFact --> LightBulbType : headlightBulbType
+TireFact --> WheelId : wheelId
+TireFact --> AxleId : axleId
+BrakeMeasurementEvent --> WheelId : wheelId
+BrakeMeasurementEvent --> AxleId : axleId
+BrakeTestResultFact --> WheelId : wheelId
+BrakeTestResultFact --> AxleId : axleId
+AxleBrakeResultFact --> AxleId : axleId
+
+' ═══════════════════════════════════════════════════════════════════════════
+' VEZE IZMEĐU FAKTOVA (isprekidana)
+' ═══════════════════════════════════════════════════════════════════════════
+
+' --- 1. TireFact ↔ TireFact (DRL: upoređivanje parova na istoj osovini) ---
+TireFact "2" ..> "2" TireFact : <<agregira>>\nista osovina (axleId)\nconstructionType, loadIndex
+
+' --- 2. CEP lanac (dokumentovano u modelu) ---
+BrakeMeasurementEvent "1..*" ..> "1" BrakeTestResultFact : <<agregira>>\npo točku (wheelId)
+BrakeMeasurementEvent "1..*" ..> "1" AxleBrakeResultFact : <<agregira>>\npo osovini (axleId)
+BrakeTestResultFact "2" ..> "1" AxleBrakeResultFact : <<agregira>>\nlevi/desni maxForce
+
+' --- 3. Fact ↔ Vehicle (DRL when +/ili KieSession) ---
+ExhaustSystemFact ..> Vehicle : <<u pravilima>>\nfuelType, productionDate,\nenginePowerKw
+LightingSystemFact ..> Vehicle : <<u pravilima>>\nfirstRegistrationDate,\nlengthMetres, ...
+
+TireFact ..> Vehicle : <<u sesiji>>
+DriveSystemFact ..> Vehicle : <<u sesiji>>
+ExhaustSystemFact ..> Vehicle : <<u sesiji>>
+SuspensionSystemFact ..> Vehicle : <<u sesiji>>
+ElectricalInstallationFact ..> Vehicle : <<u sesiji>>
+LightingSystemFact ..> Vehicle : <<u sesiji>>
+MandatoryEquipmentFact ..> Vehicle : <<u sesiji>>
+
+' BrakeFluidFact — bez Vehicle u sesiji
+
+' --- 4. Fact → InspectionIssue (DRL insert) ---
+BrakeFluidFact ..> InspectionIssue : <<proizvodi>>\nsystem=BRAKE_SYSTEM
+DriveSystemFact ..> InspectionIssue : <<proizvodi>>\nsystem=ENGINE
+ExhaustSystemFact ..> InspectionIssue : <<proizvodi>>\nsystem=EXHAUST_SYSTEM
+LightingSystemFact ..> InspectionIssue : <<proizvodi>>\nsystem=LIGHTING
+SuspensionSystemFact ..> InspectionIssue : <<proizvodi>>\nsystem=CHASSIS_SUSPENSION
+TireFact ..> InspectionIssue : <<proizvodi>>\nsystem=WHEELS_TYRES
+ElectricalInstallationFact ..> InspectionIssue : <<proizvodi>>\nsystem=ELECTRICAL_SYSTEM
+MandatoryEquipmentFact ..> InspectionIssue : <<proizvodi>>\nsystem=MANDATORY_EQUIPMENT
+
+' --- 5. Fact ↔ SystemStatus (KieSession — par po koraku pregleda) ---
+BrakeFluidFact ..> SystemStatus : <<u sesiji>>\nBRAKE_SYSTEM
+DriveSystemFact ..> SystemStatus : <<u sesiji>>\nENGINE
+ExhaustSystemFact ..> SystemStatus : <<u sesiji>>\nEXHAUST_SYSTEM
+LightingSystemFact ..> SystemStatus : <<u sesiji>>\nLIGHTING
+SuspensionSystemFact ..> SystemStatus : <<u sesiji>>\nCHASSIS_SUSPENSION
+TireFact ..> SystemStatus : <<u sesiji>>\nWHEELS_TYRES
+ElectricalInstallationFact ..> SystemStatus : <<u sesiji>>\nELECTRICAL_SYSTEM
+MandatoryEquipmentFact ..> SystemStatus : <<u sesiji>>\nMANDATORY_EQUIPMENT
+
+' CEP → kočioni sistem (planirano)
+BrakeTestResultFact ..> SystemStatus : <<u sesiji>>\nBRAKE_SYSTEM (planirano)
+AxleBrakeResultFact ..> SystemStatus : <<u sesiji>>\nBRAKE_SYSTEM (planirano)
+
+' --- 6. Tok pregleda — redosled faktova (InspectionService) ---
+TireFact ..> DriveSystemFact : <<precedes>>
+DriveSystemFact ..> BrakeFluidFact : <<precedes>>
+BrakeFluidFact ..> ExhaustSystemFact : <<precedes>>
+ExhaustSystemFact ..> SuspensionSystemFact : <<precedes>>
+SuspensionSystemFact ..> ElectricalInstallationFact : <<precedes>>
+ElectricalInstallationFact ..> LightingSystemFact : <<precedes>>
+LightingSystemFact ..> MandatoryEquipmentFact : <<precedes>>
+
+' CEP u okviru kočionog sistema (posle BrakeFluidFact u domenu)
+BrakeFluidFact ..> BrakeMeasurementEvent : <<precedes>>\nCEP test (planirano)
+
+' --- 7. Lanac pravila (models — za kontekst faktova) ---
+InspectionIssue ..> SystemStatus : <<agregira>>\nLevel-2 pravila
+SystemStatus ..> FinalDecision : <<utiče na>>\nLevel-3 pravila
+InspectionConditions ..> InspectionIssue : <<proizvodi>>\nPRE_INSPECTION
+VehicleIdentification ..> InspectionIssue : <<proizvodi>>\nIDENTIFICATION
+
+@enduml

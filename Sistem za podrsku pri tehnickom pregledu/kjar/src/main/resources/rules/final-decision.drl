@@ -6,6 +6,7 @@ import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.enums.InspectionResult;
 import sistem_tehnicki_pregled.model.models.InspectionConditions;
 import sistem_tehnicki_pregled.model.models.VehicleIdentification;
+import sistem_tehnicki_pregled.model.facts.BrakeFailureFact;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  LEVEL 3 — FINAL DECISION
@@ -200,6 +201,20 @@ rule "FINAL: Electrical system check passed"
             setPrimaryReason("Električne instalacije i akumulator su bezbedni i pravilno osigurani."),
             setResolved(true)
         };
+end
+
+rule "Brake test result FAILED"
+
+when
+    exists(BrakeFailureFact())
+
+    $d : FinalDecision()
+
+then
+    modify($d){
+        setResult(InspectionResult.NIJE_PROSAO),
+        setResolved(true)
+    };
 end
 
 //rule "FINAL: Mandatory equipment check passed"

@@ -90,6 +90,8 @@ public class InspectionResponseFactory {
             case WHEELS_TYRES_PASSED -> "Provera guma i točkova je uspešno završena";
             case ELECTRICAL_SYSTEM_PASSED -> "Provera elektroinstalacije je uspešno završena";
             case MANDATORY_EQUIPMENT_PASSED -> "Provera obavezne opreme je uspešno završena";
+            case BRAKE_TEST_RUNNING -> "Provera kočnica je uspešno pokrenuta";
+            case BRAKE_TEST_PASSED -> "Provera kočnica je uspešno završena";
         };
     }
 }
