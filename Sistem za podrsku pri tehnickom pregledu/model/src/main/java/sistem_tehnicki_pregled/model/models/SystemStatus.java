@@ -32,6 +32,7 @@ public class SystemStatus {
     public static final String WHEELS_TYRES        = "WHEELS_TYRES";
     public static final String CHASSIS_SUSPENSION        = "CHASSIS_SUSPENSION";
     public static final String EXHAUST_SYSTEM        = "EXHAUST_SYSTEM";
+    public static final String BRAKE_TEST        = "BRAKE_TEST";
 
     /** Logical name of this system (use constants above). */
     private String systemName;

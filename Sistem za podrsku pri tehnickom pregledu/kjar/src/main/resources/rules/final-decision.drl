@@ -65,15 +65,24 @@ rule "FINAL: Vehicle failed — one or more systems failed"
          or SystemStatus(systemName == SystemStatus.CHASSIS_SUSPENSION,         failed == true)
          or SystemStatus(systemName == SystemStatus.WHEELS_TYRES,         failed == true)
          or SystemStatus(systemName == SystemStatus.EXHAUST_SYSTEM,         failed == true)
+         or SystemStatus(systemName == SystemStatus.BRAKE_TEST,         failed == true)
         )
     then
-
+System.out.println("--- Trenutni objekti u CEP sesiji FINAL ---");
+                for (Object fact : drools.getKieRuntime().getObjects()) {
+                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
+                }
         modify($d){
             setResult(InspectionResult.NIJE_PROSAO),
             setPrimaryReason("Ustanovljeni su nedostaci koji onemogućavaju prolazak tehničkog pregleda."),
             setResolved(true)
         };
+        System.out.println("--- Trenutni objekti u CEP sesiji FINAL2 ---");
+                        for (Object facts : drools.getKieRuntime().getObjects()) {
+                            System.out.println("   -> " + facts.getClass().getSimpleName() + ": " + facts);
+                        }
 end
+
 
 rule "FINAL: Identification passed — vehicle successfully identified"
     salience 6
@@ -203,18 +212,24 @@ rule "FINAL: Electrical system check passed"
         };
 end
 
-rule "Brake test result FAILED"
+rule "FINAL: Brake test result check passed"
 
-when
-    exists(BrakeFailureFact())
+    salience 6
+    when
+        $d : FinalDecision(resolved == false)
+        $s : SystemStatus(systemName == SystemStatus.BRAKE_TEST, failed == false)
+        not InspectionIssue(system == "BRAKE_TEST", passed == false)
 
-    $d : FinalDecision()
-
-then
-    modify($d){
-        setResult(InspectionResult.NIJE_PROSAO),
-        setResolved(true)
-    };
+    then
+    System.out.println("--- Trenutni objekti u CEP sesiji final prosao passed ---");
+                    for (Object fact : drools.getKieRuntime().getObjects()) {
+                        System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
+                    }
+        modify($d){
+            setResult(InspectionResult.BRAKE_TEST_PASSED),
+            setPrimaryReason("Kočnice zadovoljavaju sve uslove."),
+            setResolved(true)
+        };
 end
 
 //rule "FINAL: Mandatory equipment check passed"
@@ -237,7 +252,10 @@ rule "FINAL: Vehicle passed — no failures detected"
         $d : FinalDecision(resolved == false)
         not InspectionIssue(passed == false)
     then
-
+System.out.println("--- Trenutni objekti u CEP sesiji final prosao ---");
+                for (Object fact : drools.getKieRuntime().getObjects()) {
+                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
+                }
         modify($d){
                 setResult(InspectionResult.PROSAO),
                 setPrimaryReason("Vozilo ispunjava sve tehničke uslove."),

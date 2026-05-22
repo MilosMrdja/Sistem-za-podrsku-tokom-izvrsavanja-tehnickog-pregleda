@@ -58,6 +58,10 @@ public class InspectionController {
     public ResponseEntity<InspectionResponseDTO> startBrakeTest(@PathVariable Long id) {
         return ResponseEntity.ok(inspectionService.startBrakeTest(id));
     }
+    @GetMapping("/{inspectionId}/status")
+    public ResponseEntity<InspectionResponseDTO> getBrakeTestStatus(@PathVariable Long inspectionId) {
+        return ResponseEntity.ok(inspectionService.getBrakeTestStatus(inspectionId));
+    }
     @PostMapping("/electrical-system")
     public ResponseEntity<InspectionResponseDTO> electricalSystem(@Valid @RequestBody ElectricalSystemDTO request) {
         return ResponseEntity.ok(inspectionService.checkElectricalSystem(request));

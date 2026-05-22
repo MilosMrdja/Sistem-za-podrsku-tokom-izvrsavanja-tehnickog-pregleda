@@ -3,6 +3,7 @@ package sistem_tehnicki_pregled.service.application;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -41,7 +42,7 @@ public class InspectionService {
     private final InspectionResponseFactory responseFactory;
     private final VehicleRepository vehicleRepository;
     private final InspectionRepository inspectionRepository;
-    private final KafkaTemplate<String, Long> kafkaTemplate;
+    private final KafkaTemplate<String, Integer> kafkaTemplate;
 
     public InspectionResponseDTO createInspection(VehicleDTO vehicleInfoRequest) {
         if (vehicleRepository.existsByVin(vehicleInfoRequest.getVin())) {
@@ -227,10 +228,10 @@ public class InspectionService {
                 "Uslovi za proveru kočnica nisu ispunjeni, mehanički delovi se moraju proveriti"
         );
 
-        inspection.setResult(InspectionResult.BRAKE_TEST_RUNNING);
+        inspection.setResult(InspectionResult.CHASSIS_SUSPENSION_PASSED);
         inspectionRepository.save(inspection);
 
-        kafkaTemplate.send("start-brake-test", inspectionId);
+        kafkaTemplate.send("start-brake-test", inspectionId.intValue());
 
         return responseFactory.build(
                 inspection.getVehicle(),
@@ -240,17 +241,32 @@ public class InspectionService {
         );
     }
 
-    @KafkaListener(topics = "brake-test-finished")
-    public void finish(Long inspectionId) {
+//    @KafkaListener(topics = "brake-test-finished")
+//    public void finish(Long inspectionId) {
+//
+//        Inspection ins = inspectionRepository.findById(inspectionId).orElseThrow();
+//
+//        if(ins.getResult() != InspectionResult.NIJE_PROSAO){
+//            ins.setResult(InspectionResult.BRAKE_TEST_PASSED);
+//        }
+//
+//        inspectionRepository.save(ins);
+//    }
 
-        Inspection ins = inspectionRepository.findById(inspectionId).orElseThrow();
+    public InspectionResponseDTO getBrakeTestStatus(Long inspectionId) {
+        Inspection inspection = inspectionRepository.findById(inspectionId)
+                .orElseThrow(() -> new BadRequestError("Pregled nije pronađen"));
 
-        if(ins.getResult() != InspectionResult.NIJE_PROSAO){
-            ins.setResult(InspectionResult.BRAKE_TEST_PASSED);
-        }
 
-        inspectionRepository.save(ins);
+
+        return responseFactory.build(
+                inspection.getVehicle(),
+                inspection.getResult(),
+                LocalDateTime.now(),
+                inspectionId
+        );
     }
+
 
     public InspectionResponseDTO checkLightingSystem(LightingSystemDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.ELECTRICAL_SYSTEM_PASSED,
@@ -334,6 +350,10 @@ public class InspectionService {
             inspection.setResolved(true);
             inspection.setFinishedAt(LocalDateTime.now());
         } else {
+            if(decision.getResult() == InspectionResult.PROSAO){
+                inspection.setResolved(true);
+                inspection.setFinishedAt(LocalDateTime.now());
+            }
             inspection.setResult(decision.getResult());
         }
         inspectionRepository.save(inspection);

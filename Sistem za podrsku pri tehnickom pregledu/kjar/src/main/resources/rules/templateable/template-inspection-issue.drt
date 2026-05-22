@@ -31,6 +31,10 @@ when
         issue     == "@{issue}"
     )
 then
+System.out.println("--- Trenutni objekti u CEP sesiji TEMPLATE ---");
+        for (Object fact : drools.getKieRuntime().getObjects()) {
+            System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
+        }
     modify($i) {
         setPassed(false)
     }

@@ -31,6 +31,24 @@ rule "STATUS: Aggregate brake system issues"
             setFailed(true)
         };
 end
+rule "STATUS: Aggregate brake test issues"
+    salience 50
+    when
+        $issue  : InspectionIssue(system == "BRAKE_TEST", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.BRAKE_TEST, failed == false)
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        System.out.println("--- Trenutni objekti u CEP sesiji SZSTEM STATUS ---");
+                for (Object fact : drools.getKieRuntime().getObjects()) {
+                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
+                }
+        modify($status){
+            setFailureReasons(reasons),
+            setFailed(true)
+        };
+end
+
 
 rule "STATUS: Aggregate lighting issues"
     salience 50
@@ -149,6 +167,21 @@ rule "STATUS: Accumulate additional brake failures"
             setFailureReasons(reasons)
         };
 end
+
+rule "STATUS: Accumulate additional brake test"
+    salience 49
+    when
+        $issue  : InspectionIssue(system == "BRAKE_TEST", passed == false)
+        $status : SystemStatus(systemName == SystemStatus.BRAKE_TEST, failed == true,
+                               !failureReasons.contains($issue.getDescription()))
+    then
+        List<String> reasons = new ArrayList<>($status.getFailureReasons());
+        reasons.add($issue.getDescription());
+        modify($status){
+            setFailureReasons(reasons)
+        };
+end
+
 
 rule "STATUS: Accumulate additional lighting failures"
     salience 49

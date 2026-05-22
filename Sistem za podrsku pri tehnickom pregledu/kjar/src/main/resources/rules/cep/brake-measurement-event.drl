@@ -8,20 +8,29 @@ import sistem_tehnicki_pregled.model.enums.AxleId
 import sistem_tehnicki_pregled.model.models.InspectionIssue
 import sistem_tehnicki_pregled.model.cep.BrakeTestResultFact
 import sistem_tehnicki_pregled.model.facts.BrakeFailureFact
+import sistem_tehnicki_pregled.model.cep.BrakeTestFinishedEvent
+
+// Eksplicitno potvrđujemo ulogu događaja i za kbase konfiguraciju unutar DRL-a
+declare BrakeMeasurementEvent
+    @role(event)
+    @timestamp(timestamp)
+    @expires(10s) // Automatski briši sirove događaje iz memorije posle 10s da ne zaguše sistem
+end
+
+declare BrakeTestResultFact
+    @role(event)
+    @expires(1m)  // Rezultati žive 1 minut, dovoljno da se provere grafikoni/balans osovina
+end
 
 
 rule "Invalid wheel axle mapping"
 when
     $e : BrakeMeasurementEvent(
-        (wheelId == WheelId.FL || wheelId == WheelId.FR)
-        && axleId != AxleId.FRONT
-    )
-    or
-    $e : BrakeMeasurementEvent(
-        (wheelId == WheelId.RL || wheelId == WheelId.RR)
-        && axleId != AxleId.REAR
+        ((wheelId == WheelId.FL || wheelId == WheelId.FR) && axleId != AxleId.FRONT) ||
+        ((wheelId == WheelId.RL || wheelId == WheelId.RR) && axleId != AxleId.REAR)
     )
 then
+    System.out.println("⚠ [Drools CEP] Detektovano loše mapiranje točka/osovine za ID: " + $e.inspectionId);
     insert(
         InspectionIssue.of(
             "WHEEL_TIRE",
@@ -34,68 +43,114 @@ end
 
 
 rule "Wheel aggregation"
+salience 100
+// no-loop sprečava da insert unutar ovog pravila ponovo aktivira isto pravilo u istoj milisekundi
+no-loop true
 when
-    $e : BrakeMeasurementEvent($wheelId : wheelId)
+    BrakeTestFinishedEvent($idI : inspectionId)
+    // Uzimamo najnoviji događaj kao okidač
+    $e : BrakeMeasurementEvent($wheelId : wheelId, $id : inspectionId)
+
+    // Sprečavamo rekurziju: računamo samo ako već nismo izbacili rezultat u poslednje 3 sekunde
+    not (BrakeTestResultFact(inspectionId == $id, wheelId == $wheelId) over window:time(20s))
 
     $max : Double() from accumulate(
-        BrakeMeasurementEvent(wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
+        BrakeMeasurementEvent(inspectionId == $id, wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
         max($bf)
     )
 
     $min : Double() from accumulate(
-        BrakeMeasurementEvent(wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
+        BrakeMeasurementEvent(inspectionId == $id, wheelId == $wheelId, $bf : brakeForce.doubleValue) over window:time(5s),
         min($bf)
     )
 then
+    double ovality = ($max != 0) ? (($max - $min) / $max) * 100.0 : 0.0;
+
+    System.out.println("📊 [Drools CEP] Agregacija za " + $wheelId + " (Pregled: " + $id + ") -> Max: " + $max + "daN, Ovalnost: " + ovality + "%");
+
     insert(
         BrakeTestResultFact.of(
-            $e.inspectionId,
+            $id,
             $wheelId,
-            ($wheelId == WheelId.FL || $wheelId == WheelId.FR)
-                ? AxleId.FRONT
-                : AxleId.REAR,
+            ($wheelId == WheelId.FL || $wheelId == WheelId.FR) ? AxleId.FRONT : AxleId.REAR,
             $max,
-            ($max != 0 ? (($max - $min) / $max) * 100.0 : 0.0)
+            ovality
         )
     );
 end
 
 
 rule "Brake force insufficient"
+salience 95
 when
-    $r : BrakeTestResultFact(maxForce < 100)
+    $r : BrakeTestResultFact(maxForce < 1, $id : inspectionId, $wId : wheelId)
 then
+    System.out.println("🚨 [Drools CEP] NEDOVOLJNA SILA KOČENJA: " + $wId + " ima samo " + $r.maxForce + " daN");
+    //insert(BrakeFailureFact.of($id, "LOW_FORCE_" + $wId));
     insert(
-        BrakeFailureFact.of(
-        $r.inspectionId,
-        "OVALITY_" + $r.wheelId
-        ));
+            InspectionIssue.of(
+                "BRAKE_TEST",
+                "BRAKE_FORCE",
+                "LOW_FORCE",
+                "Nije uspostavljena minimalna sila kočenja"
+            )
+        );
 end
 
 
-rule "Axle imbalance"
+rule "Axle imbalance - FRONT"
+salience 95
 when
-    $l : BrakeTestResultFact(wheelId == WheelId.FL, $lf : maxForce)
-    $r : BrakeTestResultFact(wheelId == WheelId.FR, $rf : maxForce)
-
-    eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 20)
+    $l : BrakeTestResultFact(wheelId == WheelId.FL, $lf : maxForce, $id : inspectionId)
+    $r : BrakeTestResultFact(wheelId == WheelId.FR, $rf : maxForce, inspectionId == $id)
+    eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 100)
 then
-    insert(
-        BrakeFailureFact.of(
-            $l.inspectionId,
-            "IMBALANCE_AXLE"
-        )
-    );
+    System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST PREDNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
+    //insert(BrakeFailureFact.of($id, "IMBALANCE_AXLE_FRONT"));
+        insert(
+                InspectionIssue.of(
+                    "BRAKE_TEST",
+                    "BRAKE_IMBALANCE",
+                    "LOW_BRAKE_IMBALANCE_FRONT",
+                    "Uspotavljen imbalans na prednjoj osovini"
+                )
+            );
+end
+
+rule "Axle imbalance - REAR"
+salience 95
+when
+    $l : BrakeTestResultFact(wheelId == WheelId.RL, $lf : maxForce, $id : inspectionId)
+    $r : BrakeTestResultFact(wheelId == WheelId.RR, $rf : maxForce, inspectionId == $id)
+    eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 100)
+then
+    System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST YADNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
+    //insert(BrakeFailureFact.of($id, "IMBALANCE_AXLE_FRONT"));
+        insert(
+                InspectionIssue.of(
+                    "BRAKE_TEST",
+                    "BRAKE_IMBALANCE",
+                    "LOW_BRAKE_IMBALANCE_REAR",
+                    "Uspotavljen imbalans na yadnjoj osovini"
+                )
+            );
 end
 
 
 rule "Ovality failure"
+salience 95
 when
-    $r : BrakeTestResultFact(ovalityPercent > 20)
+    $r : BrakeTestResultFact(ovalityPercent > 100, $id : inspectionId, $wId : wheelId)
 then
+    System.out.println("🚨 [Drools CEP] OVALNOST PREKO DOZVOLJENE: " + $wId + " iznosi " + $r.ovalityPercent + "%");
+    //insert(BrakeFailureFact.of($id, "OVALITY_" + $wId));
+
     insert(
-        BrakeFailureFact.of(
-        $r.inspectionId,
-        "OVALITY_" + $r.wheelId
-        ));
+                    InspectionIssue.of(
+                        "BRAKE_TEST",
+                        "DISK_OVALITY",
+                        "LOW_OVALITY",
+                        "Ovalnost diska je ispod minimalne"
+                    )
+                );
 end
