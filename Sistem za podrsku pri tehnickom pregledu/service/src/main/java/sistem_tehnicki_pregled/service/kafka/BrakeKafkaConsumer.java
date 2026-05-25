@@ -8,11 +8,14 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import sistem_tehnicki_pregled.model.cep.BrakeMeasurementEvent;
 import sistem_tehnicki_pregled.model.cep.BrakeTestFinishedEvent;
+import sistem_tehnicki_pregled.model.entities.Inspection;
 import sistem_tehnicki_pregled.model.enums.InspectionResult;
 import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.models.SystemStatus;
 import sistem_tehnicki_pregled.service.factories.DroolsSessionFactory;
+import sistem_tehnicki_pregled.service.repositories.InspectionRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
@@ -23,6 +26,7 @@ public class BrakeKafkaConsumer {
 
     private KieSession cepSession;
     private final DroolsSessionFactory sessionFactory;
+    private final InspectionRepository inspectionRepository;
     @PostConstruct
     public void init() {
         this.cepSession = sessionFactory.createSession();
@@ -61,7 +65,7 @@ public class BrakeKafkaConsumer {
                         "🏁 Finish signal received: {}",
                         event.getInspectionId()
                 );
-
+                Inspection inspection = inspectionRepository.findById(event.getInspectionId()).orElse(null);
                 cepSession.insert(event);
 
                 insertDecisionIfNeeded(event);
@@ -77,6 +81,7 @@ public class BrakeKafkaConsumer {
                         "FinalDecision: {}",
                         decision
                 );
+                updateInspectionState(inspection, decision);
 
             } catch (Exception e) {
                 log.error(
@@ -86,6 +91,18 @@ public class BrakeKafkaConsumer {
             }
         }
 
+    }
+
+    private void updateInspectionState(Inspection inspection, FinalDecision decision) {
+        if (decision.getResult() == InspectionResult.NIJE_PROSAO) {
+            inspection.setResult(InspectionResult.NIJE_PROSAO);
+            inspection.setResolved(true);
+            inspection.setFinishedAt(LocalDateTime.now());
+        } else {
+
+            inspection.setResult(decision.getResult());
+        }
+        inspectionRepository.save(inspection);
     }
 
     private void initializeBrakeSystemIfNeeded() {

@@ -7,16 +7,12 @@ import threading
 import struct
 
 BOOTSTRAP = "localhost:9092"
-
-# 1. Koristimo bazični producer bez fiksnog serializera na nivou klase,
-#    kako bismo mogli da šaljemo i JSON (merenja) i običan text/long (finish signal)
 producer = KafkaProducer(bootstrap_servers=BOOTSTRAP)
 
 
 consumer = KafkaConsumer(
     "start-brake-test",
     bootstrap_servers=BOOTSTRAP,
-    # '!' označava Big-Endian (mrežni bajt redosled), 'i' označava 4-bajtni signed int
     value_deserializer=lambda x: struct.unpack('!i', x)[0] if x else None,
     auto_offset_reset="latest",
     group_id="python-simulator"
@@ -24,16 +20,14 @@ consumer = KafkaConsumer(
 
 WHEELS = ["FL", "FR", "RL", "RR"]
 
-# Skup aktivnih pregleda koji se trenutno simuliraju (sprečava preklapanje niti)
 active_inspections = set()
 
 def simulation_loop(inspection_id):
     print(f"🚗 Simulacija POKRENUTA za pregled ID: {inspection_id}")
     
     start_time = time.time()
-    TEST_DURATION = 10  # Radi tačno 15 sekundi
+    TEST_DURATION = 10 
 
-    # Petlja radi dok ne istekne vreme i dok je ovaj konkretni ID u aktivnim
     while (time.time() - start_time < TEST_DURATION) and (inspection_id in active_inspections):
         for wheel in WHEELS:
             if inspection_id not in active_inspections: 
@@ -50,11 +44,10 @@ def simulation_loop(inspection_id):
             # Ovde eksplicitno pretvaramo u JSON jer šaljemo objekat
             json_payload = json.dumps(event).encode("utf-8")
             producer.send("brake-measurements", value=json_payload)
-            time.sleep(0.1) # Smanjeno sa 0.5 na 0.1 sekundu da simulacija bude dinamičnija (više tačaka za CEP)
+            time.sleep(0.1)
             
         time.sleep(0.5)
             
-    # Sklanjamo ID iz aktivnih
     if inspection_id in active_inspections:
         active_inspections.remove(inspection_id)
         
@@ -81,11 +74,9 @@ for msg in consumer:
         current_inspection_id = msg.value
         print(f"📩 Primljen START signal za ID: {current_inspection_id}")
 
-        # Ako se ovaj pregled već ne simulira, pokreni ga
         if current_inspection_id not in active_inspections:
             active_inspections.add(current_inspection_id)
             
-            # Pokrećemo simulaciju u pozadinskoj niti i stavljamo daemon=True
             t = threading.Thread(target=simulation_loop, args=(current_inspection_id,))
             t.daemon = True
             t.start()

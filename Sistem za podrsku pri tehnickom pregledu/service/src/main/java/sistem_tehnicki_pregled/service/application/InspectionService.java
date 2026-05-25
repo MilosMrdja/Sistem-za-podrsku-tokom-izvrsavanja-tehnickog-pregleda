@@ -224,11 +224,11 @@ public class InspectionService {
 
         Inspection inspection = getActiveInspection(
                 inspectionId,
-                InspectionResult.CHASSIS_SUSPENSION_PASSED,
-                "Uslovi za proveru kočnica nisu ispunjeni, mehanički delovi se moraju proveriti"
+                InspectionResult.ELECTRICAL_SYSTEM_PASSED,
+                "Uslovi za proveru kočnica nisu ispunjeni, elektroinstalacija se mora proveriti"
         );
 
-        inspection.setResult(InspectionResult.CHASSIS_SUSPENSION_PASSED);
+        inspection.setResult(InspectionResult.BRAKE_TEST_RUNNING);
         inspectionRepository.save(inspection);
 
         kafkaTemplate.send("start-brake-test", inspectionId.intValue());
@@ -269,8 +269,8 @@ public class InspectionService {
 
 
     public InspectionResponseDTO checkLightingSystem(LightingSystemDTO request) {
-        Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.ELECTRICAL_SYSTEM_PASSED,
-                "Uslovi potrebni za proveru svetala nisu ispunjeni, elektroinstalacija se mora proveriti");
+        Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.BRAKE_TEST_PASSED,
+                "Uslovi potrebni za proveru svetala nisu ispunjeni, kočnice se moraju proveriti");
 
         Vehicle vehicle = inspection.getVehicle();
         LightingSystemFact lightingSystemFact = mapper.toLightingSystem(request);
