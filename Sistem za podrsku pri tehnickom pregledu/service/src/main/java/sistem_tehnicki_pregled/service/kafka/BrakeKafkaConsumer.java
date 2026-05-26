@@ -14,10 +14,10 @@ import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.models.SystemStatus;
 import sistem_tehnicki_pregled.service.factories.DroolsSessionFactory;
 import sistem_tehnicki_pregled.service.repositories.InspectionRepository;
+import sistem_tehnicki_pregled.service.websocket.InspectionNotificationService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.function.Consumer;
 
 @Component
 @RequiredArgsConstructor
@@ -27,11 +27,14 @@ public class BrakeKafkaConsumer {
     private KieSession cepSession;
     private final DroolsSessionFactory sessionFactory;
     private final InspectionRepository inspectionRepository;
+    private final InspectionNotificationService notificationService;
+
     @PostConstruct
     public void init() {
         this.cepSession = sessionFactory.createSession();
         log.info("KieSession uspešno kreirana preko DroolsSessionFactory.");
     }
+
     @KafkaListener(topics = "brake-measurements", groupId = "cep-group")
     public void consume(BrakeMeasurementEvent event) {
         synchronized (cepSession) {
@@ -47,15 +50,11 @@ public class BrakeKafkaConsumer {
 
     }
 
-    @KafkaListener(
-            topics = "brake-test-finished",
-            groupId = "cep-group",
-            properties = {
-                    "value.deserializer=org.springframework.kafka.support.serializer.JsonDeserializer",
-                    "spring.json.value.default.type=sistem_tehnicki_pregled.model.cep.BrakeTestFinishedEvent",
-                    "spring.json.trusted.packages=sistem_tehnicki_pregled.model.cep"
-            }
-    )
+    @KafkaListener(topics = "brake-test-finished", groupId = "cep-group", properties = {
+            "value.deserializer=org.springframework.kafka.support.serializer.JsonDeserializer",
+            "spring.json.value.default.type=sistem_tehnicki_pregled.model.cep.BrakeTestFinishedEvent",
+            "spring.json.trusted.packages=sistem_tehnicki_pregled.model.cep"
+    })
     public void consumeFinishSignal(
             BrakeTestFinishedEvent event) {
         synchronized (cepSession) {
@@ -63,8 +62,7 @@ public class BrakeKafkaConsumer {
 
                 log.info(
                         "🏁 Finish signal received: {}",
-                        event.getInspectionId()
-                );
+                        event.getInspectionId());
                 Inspection inspection = inspectionRepository.findById(event.getInspectionId()).orElse(null);
                 cepSession.insert(event);
 
@@ -74,20 +72,21 @@ public class BrakeKafkaConsumer {
 
                 log.info("Rules fired: {}", fired);
 
-                FinalDecision decision =
-                        getFinalDecision();
+                FinalDecision decision = getFinalDecision();
 
                 log.info(
                         "FinalDecision: {}",
-                        decision
-                );
+                        decision);
                 updateInspectionState(inspection, decision);
+
+                if (inspection != null) {
+                    notificationService.notifyBrakeTestFinished(inspection);
+                }
 
             } catch (Exception e) {
                 log.error(
                         "Error processing finish signal",
-                        e
-                );
+                        e);
             }
         }
 
@@ -107,15 +106,13 @@ public class BrakeKafkaConsumer {
 
     private void initializeBrakeSystemIfNeeded() {
 
-        boolean exists =
-                cepSession.getObjects(obj ->
-                                obj instanceof SystemStatus &&
-                                        SystemStatus.BRAKE_TEST.equals(
-                                                ((SystemStatus)obj)
-                                                        .getSystemName()))
-                        .stream()
-                        .findFirst()
-                        .isPresent();
+        boolean exists = cepSession.getObjects(obj -> obj instanceof SystemStatus &&
+                SystemStatus.BRAKE_TEST.equals(
+                        ((SystemStatus) obj)
+                                .getSystemName()))
+                .stream()
+                .findFirst()
+                .isPresent();
 
         if (!exists) {
 
@@ -123,25 +120,22 @@ public class BrakeKafkaConsumer {
                     new SystemStatus(
                             SystemStatus.BRAKE_TEST,
                             false,
-                            new ArrayList<>()
-                    )
-            );
+                            new ArrayList<>()));
         }
     }
 
     private void insertDecisionIfNeeded(
             BrakeTestFinishedEvent event) {
 
-        boolean exists = cepSession.getObjects(obj -> obj instanceof FinalDecision ).stream().findFirst().isPresent();
+        boolean exists = cepSession.getObjects(obj -> obj instanceof FinalDecision).stream().findFirst().isPresent();
 
         if (!exists) {
 
-            FinalDecision decision =
-                    FinalDecision.builder()
-                            .result(
-                                    InspectionResult.BRAKE_TEST_PASSED)
-                            .resolved(false)
-                            .build();
+            FinalDecision decision = FinalDecision.builder()
+                    .result(
+                            InspectionResult.BRAKE_TEST_PASSED)
+                    .resolved(false)
+                    .build();
 
             cepSession.insert(decision);
         }

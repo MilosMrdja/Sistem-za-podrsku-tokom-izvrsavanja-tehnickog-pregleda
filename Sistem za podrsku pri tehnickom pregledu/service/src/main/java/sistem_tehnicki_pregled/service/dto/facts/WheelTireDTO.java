@@ -5,12 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import sistem_tehnicki_pregled.model.enums.AxleId;
+import sistem_tehnicki_pregled.model.enums.TireConstructionType;
 import sistem_tehnicki_pregled.model.enums.WheelId;
 
 @Data
 public class WheelTireDTO {
-    @NotNull(message = "ID pregleda vozila je obavezan")
-    private Long inspectionId;
+
 
     @NotNull(message = "Identifikator pozicije točka je obavezan")
     private WheelId wheelId;
@@ -34,8 +34,8 @@ public class WheelTireDTO {
     @Positive(message = "Indeks nosivosti mora biti veći od 0")
     private Integer loadIndex;
 
-    @NotBlank(message = "Vrsta i konstrukcija pneumatika je obavezno polje")
-    private String constructionType;
+    @NotNull(message = "Vrsta i konstrukcija pneumatika je obavezno polje")
+    private TireConstructionType constructionType;
 
     @NotBlank(message = "Indeks brzine pneumatika je obavezno polje")
     private String speedRating;

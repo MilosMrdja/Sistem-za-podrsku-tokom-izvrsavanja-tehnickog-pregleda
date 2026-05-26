@@ -1,0 +1,25 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f1f5f9;
+}
+
+.app-header {
+  background: #0f172a;
+  color: #fff;
+  padding: 1rem 1.5rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+}
+
+.app-main {
+  padding: 1.5rem 1rem 2rem;
+}

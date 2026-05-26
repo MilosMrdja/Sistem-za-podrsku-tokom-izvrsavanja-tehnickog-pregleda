@@ -1,0 +1,11 @@
+@if (dialog$ | async; as d) {
+  @if (d.visible) {
+    <div class="dialog-backdrop">
+      <div class="dialog" [class.dialog--success]="d.variant === 'success'" [class.dialog--error]="d.variant === 'error'">
+        <h2>{{ d.title }}</h2>
+        <p class="dialog__message">{{ d.message }}</p>
+        <app-ui-button [label]="d.confirmLabel" (pressed)="confirm()" />
+      </div>
+    </div>
+  }
+}

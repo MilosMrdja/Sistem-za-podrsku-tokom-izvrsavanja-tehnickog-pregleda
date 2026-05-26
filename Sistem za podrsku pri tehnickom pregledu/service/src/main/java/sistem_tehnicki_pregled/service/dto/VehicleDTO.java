@@ -2,6 +2,8 @@ package sistem_tehnicki_pregled.service.dto;
 
 import jakarta.validation.constraints.*;
 import sistem_tehnicki_pregled.model.enums.FuelType;
+import sistem_tehnicki_pregled.model.enums.VehicleBrand;
+import sistem_tehnicki_pregled.model.enums.VehicleModel;
 import sistem_tehnicki_pregled.model.enums.VehicleType;
 import lombok.Data;
 
@@ -22,11 +24,11 @@ public class VehicleDTO {
     @NotBlank(message = "Registarska oznaka je obavezna")
     private String registrationPlate;
 
-    @NotBlank(message = "Marka vozila je obavezna")
-    private String brand;
+    @NotNull(message = "Marka vozila je obavezna")
+    private VehicleBrand brand;
 
-    @NotBlank(message = "Model vozila je obavezan")
-    private String model;
+    @NotNull(message = "Model vozila je obavezan")
+    private VehicleModel model;
 
     @NotNull(message = "Tip vozila je obavezan")
     private VehicleType vehicleType;

@@ -1,0 +1,24 @@
+<label class="ui-field">
+  <span class="ui-field__label">
+    {{ label }}
+    @if (required) {
+      <span class="ui-field__required">*</span>
+    }
+  </span>
+  <select
+    class="ui-field__control"
+    [class.ui-field__control--invalid]="showError"
+    [value]="value ?? ''"
+    [disabled]="disabled"
+    (change)="onSelect($event)"
+    (blur)="onBlur()"
+  >
+    <option value="">{{ emptyLabel }}</option>
+    @for (opt of options; track opt.value) {
+      <option [value]="opt.value">{{ opt.label }}</option>
+    }
+  </select>
+  @if (showError) {
+    <span class="ui-field__error">{{ errorMessage }}</span>
+  }
+</label>

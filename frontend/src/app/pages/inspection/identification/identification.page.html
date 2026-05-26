@@ -1,0 +1,11 @@
+<app-ui-form-card title="Identifikacija vozila" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="VIN je čitljiv" formControlName="vinReadable" />
+    <app-ui-checkbox label="VIN se poklapa sa dokumentima" formControlName="vinMatchesDocument" />
+    <app-ui-checkbox label="Kod motora se poklapa sa bazom" formControlName="engineCodeMatchesDatabase" />
+    <app-ui-checkbox label="Marka se poklapa sa bazom" formControlName="brandMatchesDatabase" />
+    <app-ui-checkbox label="Godina proizvodnje se poklapa sa bazom" formControlName="productionYearMatchesDatabase" />
+    <app-ui-checkbox label="Vozilo postoji u evidenciji" formControlName="existsInDatabase" />
+    <app-ui-button type="submit" label="Potvrdi identifikaciju" [loading]="loading" />
+  </form>
+</app-ui-form-card>

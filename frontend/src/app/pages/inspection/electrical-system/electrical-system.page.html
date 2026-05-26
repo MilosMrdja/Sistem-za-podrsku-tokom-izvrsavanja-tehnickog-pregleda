@@ -1,0 +1,7 @@
+<app-ui-form-card title="Elektroinstalacija" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="Vodovi su zaštićeni od habanja" formControlName="wiringProtected" />
+    <app-ui-checkbox label="Akumulator je dobro pričvršćen" formControlName="batterySecured" />
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+  </form>
+</app-ui-form-card>

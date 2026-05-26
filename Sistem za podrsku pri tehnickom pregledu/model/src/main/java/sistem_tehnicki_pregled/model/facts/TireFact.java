@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import sistem_tehnicki_pregled.model.enums.AxleId;
+import sistem_tehnicki_pregled.model.enums.TireConstructionType;
 import sistem_tehnicki_pregled.model.enums.WheelId;
 
 /**
@@ -36,8 +37,8 @@ public class TireFact {
     /** Load index of the tyre (e.g. 91). */
     private int loadIndex;
 
-    /** Tyre construction type (e.g. "R" for radial, "D" for diagonal). */
-    private String constructionType;
+    /** Tyre construction type (radial or diagonal). */
+    private TireConstructionType constructionType;
 
     /** Speed rating symbol (e.g. "V", "H"). */
     private String speedRating;

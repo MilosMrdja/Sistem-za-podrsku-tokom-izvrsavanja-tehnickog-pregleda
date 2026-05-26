@@ -1,0 +1,9 @@
+<app-ui-form-card title="Test kocnica" [subtitle]="sessionSubtitle">
+  @if (!started && !loading) {
+    <app-ui-button type="button" label="Start test" (click)="startTest()" />
+  } @else if (loading) {
+    <app-ui-loading [message]="statusMessage" />
+  } @else {
+    <p>Test je zavrsen ili je doslo do greske. Proverite dijalog sa rezultatom.</p>
+  }
+</app-ui-form-card>

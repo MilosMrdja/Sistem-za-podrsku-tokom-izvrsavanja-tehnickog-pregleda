@@ -1,0 +1,11 @@
+<section class="form-card">
+  <header class="form-card__header">
+    <h1>{{ title }}</h1>
+    @if (subtitle) {
+      <p>{{ subtitle }}</p>
+    }
+  </header>
+  <div class="form-card__body">
+    <ng-content />
+  </div>
+</section>

@@ -1,0 +1,46 @@
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &__required {
+    color: #dc2626;
+  }
+
+  &__control {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+
+    &:focus {
+      outline: 2px solid #93c5fd;
+      border-color: #3b82f6;
+    }
+
+    &:disabled {
+      background: #f3f4f6;
+    }
+
+    &--invalid {
+      border-color: #dc2626;
+    }
+  }
+
+  &__error {
+    font-size: 0.75rem;
+    color: #dc2626;
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+}

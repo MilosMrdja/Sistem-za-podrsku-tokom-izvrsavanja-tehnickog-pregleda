@@ -1,0 +1,8 @@
+<app-ui-form-card title="Kočiona tečnost" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-input label="Vlaga u tečnosti (%)" type="number" formControlName="moisturePercent" [required]="true" />
+    <app-ui-input label="Temperatura ključanja (°C)" type="number" formControlName="boilingPointCelsius" [required]="true" />
+    <app-ui-checkbox label="Postoji curenje na kočionom sistemu" formControlName="systemLeaking" />
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+  </form>
+</app-ui-form-card>

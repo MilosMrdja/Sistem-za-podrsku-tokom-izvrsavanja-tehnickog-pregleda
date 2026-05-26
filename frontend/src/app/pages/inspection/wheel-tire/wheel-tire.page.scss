@@ -1,0 +1,18 @@
+.wheel-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.wheel-section {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+}
+
+.wheel-section legend {
+  padding: 0 0.35rem;
+  font-weight: 700;
+  color: #1f2937;
+}

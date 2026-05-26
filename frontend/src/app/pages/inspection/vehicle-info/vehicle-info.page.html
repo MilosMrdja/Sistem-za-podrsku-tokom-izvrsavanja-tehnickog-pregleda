@@ -1,0 +1,42 @@
+<app-ui-form-card title="Unos informacija o vozilu" subtitle="Kreiranje novog tehničkog pregleda">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-input
+      label="VIN"
+      formControlName="vin"
+      [required]="true"
+      [maxLength]="17"
+      hint="Tačno 17 slova i brojeva"
+    />
+    <app-ui-input label="Kod motora" formControlName="engineCode" [required]="true" />
+    <app-ui-input
+      label="Registarska oznaka"
+      formControlName="registrationPlate"
+      [required]="true"
+      hint="Format: BG123AB (2 slova, 3–5 cifara, 2 slova)"
+    />
+    <app-ui-dropdown
+      label="Marka"
+      formControlName="brand"
+      [options]="brandOptions"
+      [required]="true"
+    />
+    <app-ui-dropdown
+      label="Model"
+      formControlName="model"
+      [options]="modelOptions"
+      [required]="true"
+      disabledPlaceholder="Prvo izaberite marku"
+    />
+    <app-ui-dropdown label="Tip vozila" formControlName="vehicleType" [options]="vehicleTypeOptions" [required]="true" />
+    <app-ui-dropdown label="Tip goriva" formControlName="fuelType" [options]="fuelOptions" [required]="true" />
+    <app-ui-input label="Datum proizvodnje" type="date" formControlName="productionDate" [required]="true" />
+    <app-ui-input label="Datum prve registracije" type="date" formControlName="firstRegistrationDate" [required]="true" />
+    <app-ui-input label="Datum prve registracije u Srbiji" type="date" formControlName="firstRegistrationDateSerbia" [required]="true" />
+    <app-ui-input label="Maks. dozvoljena masa (kg)" type="number" formControlName="maxAllowedMassKg" [required]="true" />
+    <app-ui-input label="Opterećenje prednje osovine (kg)" type="number" formControlName="frontAxleLoadKg" [required]="true" />
+    <app-ui-input label="Opterećenje zadnje osovine (kg)" type="number" formControlName="rearAxleLoadKg" [required]="true" />
+    <app-ui-input label="Snaga motora (kW)" type="number" formControlName="enginePowerKw" [required]="true" />
+    <app-ui-input label="Dužina vozila (m)" type="number" formControlName="lengthMetres" [required]="true" />
+    <app-ui-button type="submit" label="Sačuvaj i nastavi" [loading]="loading" />
+  </form>
+</app-ui-form-card>

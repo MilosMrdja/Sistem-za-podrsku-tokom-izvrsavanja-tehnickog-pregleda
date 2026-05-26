@@ -1,0 +1,10 @@
+<app-ui-form-card title="Obavezna oprema" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="Rezervni točak" formControlName="spareWheelPresent" />
+    <app-ui-checkbox label="Sigurnosni trougao" formControlName="warningTrianglePresent" />
+    <app-ui-checkbox label="Prva pomoć" formControlName="firstAidKitPresent" />
+    <app-ui-checkbox label="Uže ili poluga za vuču" formControlName="towEquipmentPresent" />
+    <app-ui-checkbox label="Svetloodbojni prsluk" formControlName="reflectiveVestPresent" />
+    <app-ui-button type="submit" label="Završi proveru opreme" [loading]="loading" />
+  </form>
+</app-ui-form-card>

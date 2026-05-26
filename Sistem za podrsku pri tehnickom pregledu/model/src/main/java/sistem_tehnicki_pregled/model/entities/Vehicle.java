@@ -5,6 +5,8 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import sistem_tehnicki_pregled.model.enums.FuelType;
+import sistem_tehnicki_pregled.model.enums.VehicleBrand;
+import sistem_tehnicki_pregled.model.enums.VehicleModel;
 import sistem_tehnicki_pregled.model.enums.VehicleType;
 
 import java.time.LocalDate;
@@ -33,11 +35,13 @@ public class Vehicle {
     @Column(unique = true, nullable = false)
     private String registrationPlate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String brand;
+    private VehicleBrand brand;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String model;
+    private VehicleModel model;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

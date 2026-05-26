@@ -10,8 +10,6 @@ import org.kie.api.definition.type.Timestamp;
 import sistem_tehnicki_pregled.model.enums.AxleId;
 import sistem_tehnicki_pregled.model.enums.WheelId;
 
-import java.time.Instant;
-
 /**
  * Single brake-force measurement event emitted by the brake-test roller device.
  * Multiple events per wheel are generated during the 5-second test window.

@@ -1,0 +1,27 @@
+<app-ui-form-card title="Svetlosni uređaji" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-input label="Jačina kratkog svetla (mcd)" type="number" formControlName="lowBeamIntensityM" [required]="true" />
+    <app-ui-input label="Jačina dugog svetla (mcd)" type="number" formControlName="highBeamIntensityM" [required]="true" />
+    <app-ui-input label="Prednje svetlo za maglu (mcd)" type="number" formControlName="frontFogLightIntensityM" [required]="true" />
+    <app-ui-input label="Zadnje svetlo za maglu (mcd)" type="number" formControlName="rearFogLightIntensityM" [required]="true" />
+    <app-ui-input label="Prednje poziciono (mcd)" type="number" formControlName="frontPositionLightIntensityM" [required]="true" />
+    <app-ui-input label="Zadnje poziciono (mcd)" type="number" formControlName="rearPositionLightIntensityM" [required]="true" />
+    <app-ui-input label="Parkirno svetlo (mcd)" type="number" formControlName="parkingLightIntensityM" [required]="true" />
+    <app-ui-input label="Stop svetlo (mcd)" type="number" formControlName="stopLightIntensityM" [required]="true" />
+    <app-ui-dropdown label="Tip sijalice" formControlName="headlightBulbType" [options]="bulbOptions" [required]="true" />
+    <app-ui-input label="Usmerenost dugog (lx)" type="number" formControlName="highBeamOrientationLx" [required]="true" />
+    <app-ui-input label="Usmerenost kratkog (lx)" type="number" formControlName="lowBeamOrientationLx" [required]="true" />
+    <app-ui-input label="Učestalost pokazivača (/min)" type="number" formControlName="turnIndicatorFrequencyPerMin" [required]="true" />
+    <app-ui-input label="Broj prednjih bočnih pokazivača" type="number" formControlName="frontSideTurnIndicatorCount" [required]="true" />
+    <app-ui-input label="Broj prednjih pokazivača" type="number" formControlName="frontTurnIndicatorCount" [required]="true" />
+    <app-ui-input label="Broj zadnjih pokazivača" type="number" formControlName="rearTurnIndicatorCount" [required]="true" />
+    <app-ui-input label="Broj bočnih pokazivača" type="number" formControlName="sideTurnIndicatorCount" [required]="true" />
+    <app-ui-checkbox label="Svetla unazad su bele boje" formControlName="reversingLightsWhite" />
+    <app-ui-checkbox label="Svetlo registarske tablice radi" formControlName="plateLightOperational" />
+    <app-ui-checkbox label="Postoji treće stop svetlo" formControlName="thirdStopLightPresent" />
+    <app-ui-checkbox label="Pokazivači su žuti" formControlName="turnIndicatorsAmber" />
+    <app-ui-checkbox label="Hazard prekidač radi" formControlName="hazardSwitchFunctional" />
+    <app-ui-checkbox label="Svi pokazivači rade" formControlName="turnIndicatorsFunctional" />
+    <app-ui-button type="submit" label="Potvrdi proveru svetala" [loading]="loading" />
+  </form>
+</app-ui-form-card>

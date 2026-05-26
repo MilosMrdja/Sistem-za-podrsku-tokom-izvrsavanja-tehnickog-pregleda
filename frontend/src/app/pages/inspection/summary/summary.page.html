@@ -1,0 +1,16 @@
+<app-ui-form-card title="Zaključak tehničkog pregleda" [subtitle]="sessionSubtitle">
+  @if (s) {
+    <div class="summary" [class.summary--pass]="passed" [class.summary--fail]="!passed">
+      <p class="summary__plate">{{ s.registrationPlate }} · {{ s.vin }}</p>
+      <h2>{{ s.lastResultLabel ?? s.lastResult }}</h2>
+      @if (s.primaryReason) {
+        <p class="summary__reason">{{ s.primaryReason }}</p>
+      }
+      <p class="summary__meta">ID pregleda: {{ s.inspectionId }}</p>
+    </div>
+    <app-ui-button label="Novi pregled" variant="secondary" (pressed)="startNew()" />
+  } @else {
+    <p>Nema podataka o pregledu.</p>
+    <app-ui-button label="Počni novi pregled" (pressed)="startNew()" />
+  }
+</app-ui-form-card>

@@ -1,0 +1,11 @@
+<app-ui-form-card title="Ogibljenje i mehanički delovi" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="Poluge su ispravne" formControlName="armsIntact" />
+    <app-ui-checkbox label="Viljuške su ispravne" formControlName="forksIntact" />
+    <app-ui-checkbox label="Stabilizatori su ispravni" formControlName="stabilizersIntact" />
+    <app-ui-checkbox label="Zglobovi su ispravni" formControlName="jointsIntact" />
+    <app-ui-checkbox label="Amortizeri su ispravni" formControlName="shockAbsorbersIntact" />
+    <app-ui-checkbox label="Opruge su ispravne" formControlName="springsIntact" />
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+  </form>
+</app-ui-form-card>

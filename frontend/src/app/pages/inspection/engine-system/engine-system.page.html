@@ -1,0 +1,11 @@
+<app-ui-form-card title="Sistem motora" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="Nosači motora su ispravni" formControlName="engineMountsIntact" />
+    <app-ui-checkbox label="Nema curenja ulja ili tečnosti" formControlName="noEngineFluidLeak" />
+    <app-ui-checkbox label="Sistem za paljenje je ispravan" formControlName="ignitionSystemIntact" />
+    <app-ui-checkbox label="Dovod goriva je pravilno pričvršćen" formControlName="fuelSupplySecured" />
+    <app-ui-checkbox label="Nema curenja goriva" formControlName="noFuelLeak" />
+    <app-ui-checkbox label="Menjač se može upravljati jednom rukom" formControlName="transmissionSafeForSingleHandOperation" />
+    <app-ui-button type="submit" label="Potvrdi proveru motora" [loading]="loading" />
+  </form>
+</app-ui-form-card>

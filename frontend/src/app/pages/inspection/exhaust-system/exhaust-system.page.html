@@ -1,0 +1,16 @@
+<app-ui-form-card title="Izduvni sistem" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    @if (isDiesel) {
+      <app-ui-input label="Koeficijent apsorpcije (dizel)" type="number" formControlName="dieselAbsorptionCoefficient" [required]="true" />
+    }
+    @if (isPetrol) {
+      <app-ui-input label="CO (%)" type="number" formControlName="petrolCoPercent" [required]="true" />
+    }
+    @if (!isDiesel && !isPetrol) {
+      <p>Unesite vrednosti merenja u skladu sa tipom goriva vozila.</p>
+      <app-ui-input label="Koeficijent apsorpcije (dizel)" type="number" formControlName="dieselAbsorptionCoefficient" />
+      <app-ui-input label="CO (%)" type="number" formControlName="petrolCoPercent" />
+    }
+    <app-ui-button type="submit" label="Potvrdi merenje" [loading]="loading" />
+  </form>
+</app-ui-form-card>

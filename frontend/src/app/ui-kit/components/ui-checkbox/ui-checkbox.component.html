@@ -1,0 +1,4 @@
+<label class="ui-check" (click)="toggle()">
+  <input type="checkbox" [checked]="value" [disabled]="disabled" (click)="$event.preventDefault()" />
+  <span>{{ label }}</span>
+</label>

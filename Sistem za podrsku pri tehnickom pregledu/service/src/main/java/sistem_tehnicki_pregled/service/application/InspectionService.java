@@ -16,15 +16,13 @@ import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.models.InspectionConditions;
 import sistem_tehnicki_pregled.model.models.SystemStatus;
 import sistem_tehnicki_pregled.model.models.VehicleIdentification;
-import sistem_tehnicki_pregled.service.dto.InspectionConditionsDTO;
-import sistem_tehnicki_pregled.service.dto.InspectionResponseDTO;
-import sistem_tehnicki_pregled.service.dto.VehicleDTO;
-import sistem_tehnicki_pregled.service.dto.VehicleIdentificationDTO;
+import sistem_tehnicki_pregled.service.dto.*;
 import sistem_tehnicki_pregled.service.dto.facts.*;
 import sistem_tehnicki_pregled.service.exceptions.BadRequestError;
 import sistem_tehnicki_pregled.service.factories.DroolsSessionFactory;
 import sistem_tehnicki_pregled.service.factories.InspectionResponseFactory;
 import sistem_tehnicki_pregled.service.mapper.InspectionMapperFacade;
+import sistem_tehnicki_pregled.service.mapper.WheelTireMapper;
 import sistem_tehnicki_pregled.service.repositories.InspectionRepository;
 import sistem_tehnicki_pregled.service.repositories.VehicleRepository;
 
@@ -36,6 +34,7 @@ import java.util.function.Consumer;
 @Service
 @RequiredArgsConstructor
 public class InspectionService {
+    private final WheelTireMapper wheelTireMapper;
 
     private final DroolsSessionFactory sessionFactory;
     private final InspectionMapperFacade mapper;
@@ -108,18 +107,27 @@ public class InspectionService {
         return responseFactory.build(inspection.getVehicle(), decision);
     }
 
-    public InspectionResponseDTO checkWheelTire(WheelTireDTO request) {
+    public InspectionResponseDTO checkWheelTire(WheelsInspectionRequestDto request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.IDENTIFICATION_PASSED,
                 "Uslovi potrebni za proveru točkova i guma nisu ispunjeni, vozilo mora biti uspešno identifikovano");
-
+        if (request.getWheels().size() != 4) {
+            throw new BadRequestError(
+                    "Vozilo mora imati tačno 4 točka."
+            );
+        }
         Vehicle vehicle = inspection.getVehicle();
-        TireFact wheelTire = mapper.toWheelTire(request);
+        WheelTireDTO wheelTire1 = request.getWheels().get(0);
+        WheelTireDTO wheelTire2 = request.getWheels().get(1);
+        WheelTireDTO wheelTire3 = request.getWheels().get(2);
+        WheelTireDTO wheelTire4 = request.getWheels().get(3);
         SystemStatus wheelTireSystem = new SystemStatus(SystemStatus.WHEELS_TYRES, false, new ArrayList<>());
 
 
         FinalDecision decision = executeDroolsRules(InspectionResult.WHEELS_TYRES_PASSED, session -> {
             session.insert(vehicle);
-            session.insert(wheelTire);
+            request.getWheels()
+                    .stream().map(wheelTireMapper::toWheelTire)
+                    .forEach(session::insert);
             session.insert(wheelTireSystem);
         });
         updateInspectionState(inspection, decision);

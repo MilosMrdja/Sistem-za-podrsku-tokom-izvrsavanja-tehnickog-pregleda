@@ -1,0 +1,12 @@
+<app-ui-form-card title="Preduslovi pregleda" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-checkbox label="Vozilo je čisto" formControlName="vehicleClean" />
+    <app-ui-checkbox label="Vozilo je u voznom stanju" formControlName="vehicleOperational" />
+    <app-ui-checkbox label="Vozilo nije preopterećeno" formControlName="notOverloaded" />
+    <app-ui-checkbox label="Registrovano u Republici Srbiji" formControlName="registeredInSerbia" />
+    <app-ui-checkbox label="Registracija je aktivna" formControlName="registrationActive" />
+    <app-ui-checkbox label="Prisutne obe registarske tablice" formControlName="bothPlatesPresent" />
+    <app-ui-checkbox label="Nema proboja od korozije" formControlName="noCorrosionHoles" />
+    <app-ui-button type="submit" label="Potvrdi preduslove" [loading]="loading" />
+  </form>
+</app-ui-form-card>

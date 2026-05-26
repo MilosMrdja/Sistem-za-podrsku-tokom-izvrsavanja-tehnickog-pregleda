@@ -1,0 +1,39 @@
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.2rem;
+  }
+
+  &--success h2 {
+    color: #15803d;
+  }
+
+  &--error h2 {
+    color: #b91c1c;
+  }
+
+  &__message {
+    white-space: pre-line;
+    color: #374151;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+}

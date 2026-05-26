@@ -1,0 +1,14 @@
+<button
+  [type]="type"
+  class="ui-btn"
+  (click)="pressed.emit()"
+  [class.ui-btn--primary]="variant === 'primary'"
+  [class.ui-btn--secondary]="variant === 'secondary'"
+  [class.ui-btn--danger]="variant === 'danger'"
+  [disabled]="disabled || loading"
+>
+  @if (loading) {
+    <span class="ui-btn__spinner"></span>
+  }
+  {{ label }}
+</button>

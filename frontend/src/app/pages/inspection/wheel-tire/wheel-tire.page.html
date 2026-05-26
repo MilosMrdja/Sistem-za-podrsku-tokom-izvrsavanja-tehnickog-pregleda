@@ -1,0 +1,25 @@
+<app-ui-form-card title="Gume i točkovi" [subtitle]="sessionSubtitle">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div formArrayName="wheels" class="wheel-list">
+      @for (wheel of wheels.controls; track wheelConfigs[$index].wheelId; let i = $index) {
+        <fieldset class="wheel-section" [formGroupName]="i">
+          <legend>{{ wheelConfigs[i].label }}</legend>
+          <app-ui-input label="Sirina gazeceg sloja (mm)" type="number" formControlName="widthMm" [required]="true" />
+          <app-ui-input label="Odnos sirine i visine (%)" type="number" formControlName="aspectRatioPercent" [required]="true" />
+          <app-ui-input label="Precnik felne (in)" type="number" formControlName="rimDiameterInches" [required]="true" />
+          <app-ui-input label="Indeks nosivosti" type="number" formControlName="loadIndex" [required]="true" />
+          <app-ui-dropdown
+            label="Konstrukcija pneumatika"
+            formControlName="constructionType"
+            [options]="constructionOptions"
+            [required]="true"
+          />
+          <app-ui-input label="Indeks brzine" formControlName="speedRating" [required]="true" />
+          <app-ui-checkbox label="Pneumatici su homologovani" formControlName="homologated" />
+          <app-ui-checkbox label="Nema zazora ili ostecenja na tockovima" formControlName="noPlayOrDamage" />
+        </fieldset>
+      }
+    </div>
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+  </form>
+</app-ui-form-card>
