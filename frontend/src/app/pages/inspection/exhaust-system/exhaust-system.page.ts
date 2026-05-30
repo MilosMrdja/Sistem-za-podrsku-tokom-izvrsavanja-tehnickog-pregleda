@@ -6,6 +6,7 @@ import { InspectionApiService } from '../../../services/api/inspection-api.servi
 import { InspectionFlowService } from '../../../services/inspection-flow.service';
 import { InspectionSessionService } from '../../../services/inspection-session.service';
 import {
+  requiredPercentageValidators,
   requiredPositiveNumberValidators,
   touchInvalidForm,
 } from '../../../shared/form-validators';
@@ -30,7 +31,7 @@ export class ExhaustSystemPage extends InspectionPageBase implements OnInit {
 
   readonly form = this.fb.group({
     dieselAbsorptionCoefficient: [1.2],
-    petrolCoPercent: [0.5],
+    petrolCoPercent: [1],
   });
 
   constructor(
@@ -73,7 +74,7 @@ export class ExhaustSystemPage extends InspectionPageBase implements OnInit {
       diesel?.setValidators(requiredPositiveNumberValidators());
       petrol?.clearValidators();
     } else if (this.isPetrol) {
-      petrol?.setValidators(requiredPositiveNumberValidators());
+      petrol?.setValidators(requiredPercentageValidators());
       diesel?.clearValidators();
     } else {
       diesel?.clearValidators();

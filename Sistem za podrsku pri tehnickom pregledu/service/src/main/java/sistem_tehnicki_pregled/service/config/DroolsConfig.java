@@ -10,13 +10,11 @@ import org.kie.api.conf.EventProcessingOption;
 import org.kie.api.definition.KiePackage;
 import org.kie.api.definition.rule.Rule;
 import org.kie.api.runtime.KieContainer;
-import org.kie.api.runtime.KieSession;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.InputStream;
 import java.io.StringReader;
-import java.util.Collections;
 
 /**
  * Spring configuration for the Drools KieContainer.
@@ -117,8 +115,4 @@ public class DroolsConfig {
         return container;
     }
 
-    @Bean
-    public KieSession kieSession(KieContainer container) {
-        return container.newKieSession("InspectionKSession");
-    }
 }

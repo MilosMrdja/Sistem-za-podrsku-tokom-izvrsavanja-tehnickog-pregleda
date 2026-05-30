@@ -1,17 +1,11 @@
 package sistem_tehnicki_pregled.service.application;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.kie.api.runtime.KieSession;
-import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import sistem_tehnicki_pregled.model.entities.Inspection;
 import sistem_tehnicki_pregled.model.entities.Vehicle;
 import sistem_tehnicki_pregled.model.enums.InspectionResult;
-import sistem_tehnicki_pregled.model.facts.*;
 import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.models.InspectionConditions;
 import sistem_tehnicki_pregled.model.models.SystemStatus;
@@ -19,7 +13,6 @@ import sistem_tehnicki_pregled.model.models.VehicleIdentification;
 import sistem_tehnicki_pregled.service.dto.*;
 import sistem_tehnicki_pregled.service.dto.facts.*;
 import sistem_tehnicki_pregled.service.exceptions.BadRequestError;
-import sistem_tehnicki_pregled.service.factories.DroolsSessionFactory;
 import sistem_tehnicki_pregled.service.factories.InspectionResponseFactory;
 import sistem_tehnicki_pregled.service.mapper.InspectionMapperFacade;
 import sistem_tehnicki_pregled.service.mapper.WheelTireMapper;
@@ -28,19 +21,19 @@ import sistem_tehnicki_pregled.service.repositories.VehicleRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InspectionService {
     private final WheelTireMapper wheelTireMapper;
 
-    private final DroolsSessionFactory sessionFactory;
+    private final InspectionDroolsExecutor droolsExecutor;
     private final InspectionMapperFacade mapper;
     private final InspectionResponseFactory responseFactory;
     private final VehicleRepository vehicleRepository;
     private final InspectionRepository inspectionRepository;
+    private final InspectionStateService inspectionStateService;
     private final KafkaTemplate<String, Integer> kafkaTemplate;
 
     public InspectionResponseDTO createInspection(VehicleDTO vehicleInfoRequest) {
@@ -71,18 +64,8 @@ public class InspectionService {
 
         InspectionConditions conditions = mapper.toInspectionConditions(request);
 
-        FinalDecision decision = executeDroolsRules(InspectionResult.PRECONDITIONS_PASSED, session -> {
-            session.insert(conditions);
-        });
-
-        inspection.setResult(decision.getResult());
-        if (decision.isResolved() && decision.getResult() == InspectionResult.NIJE_ZAPOCET) {
-            inspection.setResolved(true);
-            inspection.setFinishedAt(LocalDateTime.now());
-        }
-        inspectionRepository.save(inspection);
-
-        decision.setDecidedAt(LocalDateTime.now());
+        FinalDecision decision = droolsExecutor.executeRules(InspectionResult.PRECONDITIONS_PASSED, conditions);
+        inspectionStateService.applyDecision(inspection, decision);
         return responseFactory.build(inspection.getVehicle(), decision);
     }
 
@@ -92,18 +75,8 @@ public class InspectionService {
 
         VehicleIdentification vehicleIdentification = mapper.toVehicleIdentification(request);
 
-        FinalDecision decision = executeDroolsRules(InspectionResult.IDENTIFICATION_PASSED, session -> {
-            session.insert(vehicleIdentification);
-        });
-
-        inspection.setResult(decision.getResult());
-        if (decision.isResolved() && decision.getResult() == InspectionResult.PREKINUT) {
-            inspection.setResolved(true);
-            inspection.setFinishedAt(LocalDateTime.now());
-        }
-        inspectionRepository.save(inspection);
-
-        decision.setDecidedAt(LocalDateTime.now());
+        FinalDecision decision = droolsExecutor.executeRules(InspectionResult.IDENTIFICATION_PASSED, vehicleIdentification);
+        inspectionStateService.applyDecision(inspection, decision);
         return responseFactory.build(inspection.getVehicle(), decision);
     }
 
@@ -115,117 +88,78 @@ public class InspectionService {
                     "Vozilo mora imati tačno 4 točka."
             );
         }
-        Vehicle vehicle = inspection.getVehicle();
-        WheelTireDTO wheelTire1 = request.getWheels().get(0);
-        WheelTireDTO wheelTire2 = request.getWheels().get(1);
-        WheelTireDTO wheelTire3 = request.getWheels().get(2);
-        WheelTireDTO wheelTire4 = request.getWheels().get(3);
         SystemStatus wheelTireSystem = new SystemStatus(SystemStatus.WHEELS_TYRES, false, new ArrayList<>());
+        List<Object> wheelFacts = request.getWheels().stream()
+                .map(wheelTireMapper::toWheelTire)
+                .map(Object.class::cast)
+                .toList();
 
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.WHEELS_TYRES_PASSED, session -> {
-            session.insert(vehicle);
-            request.getWheels()
-                    .stream().map(wheelTireMapper::toWheelTire)
-                    .forEach(session::insert);
-            session.insert(wheelTireSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, wheelTireSystem);
+        return droolsExecutor.executeSystemCheck(
+                inspection,
+                InspectionResult.WHEELS_TYRES_PASSED,
+                wheelTireSystem,
+                wheelFacts.toArray()
+        );
     }
 
     public InspectionResponseDTO checkEngineSystem(EngineSystemDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.WHEELS_TYRES_PASSED,
                 "Uslovi potrebni za proveru sistema mototra nisu ispunjeni, gume i točkovi se mroaju proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        DriveSystemFact engine = mapper.toEngineSystem(request);
-        SystemStatus engineSystem = new SystemStatus(SystemStatus.ENGINE, false, new ArrayList<>());
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.ENGINE_SYSTEM_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(engine);
-            session.insert(engineSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, engineSystem);
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.ENGINE_SYSTEM_PASSED,
+                SystemStatus.ENGINE,
+                mapper.toEngineSystem(request)
+        );
     }
 
     public InspectionResponseDTO checkBrakeFluid(BrakeFluidDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.ENGINE_SYSTEM_PASSED,
                 "Uslovi potrebni za proveru kočione tečnosti nisu ispunjeni, sistem motora se mora proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        BrakeFluidFact brakeFluidFact = mapper.toBrakeFluid(request);
-        SystemStatus brakeSystem = new SystemStatus(SystemStatus.BRAKE_SYSTEM, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.BRAKE_FLUID_PASSED, session -> {
-            session.insert(brakeFluidFact);
-            session.insert(brakeSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, brakeSystem);
+        return droolsExecutor.executeSystemCheck(
+                inspection,
+                InspectionResult.BRAKE_FLUID_PASSED,
+                SystemStatus.BRAKE_SYSTEM,
+                mapper.toBrakeFluid(request)
+        );
     }
 
     public InspectionResponseDTO checkExhaustSystem(ExhaustMeasurementDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.BRAKE_FLUID_PASSED,
                 "Uslovi potrebni za proveru izduvnih gasova nisu ispunjeni, kočiona tečnost se mora proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        ExhaustSystemFact exhaustSystemFact = mapper.toExhaustSystem(request);
-        SystemStatus brakeSystem = new SystemStatus(SystemStatus.EXHAUST_SYSTEM, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.EXHAUST_SYSTEM_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(exhaustSystemFact);
-            session.insert(brakeSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, brakeSystem);
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.EXHAUST_SYSTEM_PASSED,
+                SystemStatus.EXHAUST_SYSTEM,
+                mapper.toExhaustSystem(request)
+        );
     }
 
     public InspectionResponseDTO checkSuspensionSystem(SuspensionSystemDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.EXHAUST_SYSTEM_PASSED,
                 "Uslovi potrebni za proveru mehaničkih delova nisu ispunjeni, izduvni gasovi se moraju proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        SuspensionSystemFact suspensionSystemFact = mapper.toSuspensionSystem(request);
-        SystemStatus suspensionSystem = new SystemStatus(SystemStatus.CHASSIS_SUSPENSION, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.CHASSIS_SUSPENSION_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(suspensionSystemFact);
-            session.insert(suspensionSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, suspensionSystem);
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.CHASSIS_SUSPENSION_PASSED,
+                SystemStatus.CHASSIS_SUSPENSION,
+                mapper.toSuspensionSystem(request)
+        );
     }
 
     public InspectionResponseDTO checkElectricalSystem(ElectricalSystemDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.CHASSIS_SUSPENSION_PASSED,
                 "Uslovi potrebni za proveru elektroinstalacije nisu ispunjeni, mehanički delovi se moraju proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        ElectricalInstallationFact electricalInstallationFact = mapper.toElectricalInstallation(request);
-        SystemStatus electricalSystem = new SystemStatus(SystemStatus.ELECTRICAL_SYSTEM, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.ELECTRICAL_SYSTEM_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(electricalInstallationFact);
-            session.insert(electricalSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, electricalSystem);
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.ELECTRICAL_SYSTEM_PASSED,
+                SystemStatus.ELECTRICAL_SYSTEM,
+                mapper.toElectricalInstallation(request)
+        );
     }
 
     public InspectionResponseDTO startBrakeTest(Long inspectionId) {
@@ -280,63 +214,24 @@ public class InspectionService {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.BRAKE_TEST_PASSED,
                 "Uslovi potrebni za proveru svetala nisu ispunjeni, kočnice se moraju proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        LightingSystemFact lightingSystemFact = mapper.toLightingSystem(request);
-        SystemStatus lightingSystem = new SystemStatus(SystemStatus.LIGHTING, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.LIGHTING_SYSTEM_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(lightingSystemFact);
-            session.insert(lightingSystem);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, lightingSystem);
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.LIGHTING_SYSTEM_PASSED,
+                SystemStatus.LIGHTING,
+                mapper.toLightingSystem(request)
+        );
     }
 
     public InspectionResponseDTO checkMandatoryEquipment(MandatoryEquipmentDTO request) {
         Inspection inspection = getActiveInspection(request.getInspectionId(), InspectionResult.LIGHTING_SYSTEM_PASSED,
                 "Uslovi potrebni za proveru dodatne opreme nisu ispunjeni, svetla se moraju proveriti");
 
-        Vehicle vehicle = inspection.getVehicle();
-        MandatoryEquipmentFact mandatoryEquipmentFact = mapper.toMandatoryEquipment(request);
-        SystemStatus mandatoryEquipment = new SystemStatus(SystemStatus.MANDATORY_EQUIPMENT, false, new ArrayList<>());
-
-
-        FinalDecision decision = executeDroolsRules(InspectionResult.MANDATORY_EQUIPMENT_PASSED, session -> {
-            session.insert(vehicle);
-            session.insert(mandatoryEquipmentFact);
-            session.insert(mandatoryEquipment);
-        });
-        updateInspectionState(inspection, decision);
-
-        return responseFactory.build(vehicle, decision, mandatoryEquipment);
-    }
-
-
-
-
-
-    private FinalDecision executeDroolsRules(InspectionResult initialResult, Consumer<KieSession> factsInserter) {
-        FinalDecision decision = FinalDecision.builder()
-                .result(initialResult)
-                .resolved(false)
-                .build();
-
-        KieSession session = sessionFactory.createSession();
-        try {
-           factsInserter.accept(session);
-
-            session.insert(decision);
-
-            int fired = session.fireAllRules();
-            log.info("Rules fired: {}", fired);
-        } finally {
-            session.dispose();
-        }
-
-        return decision;
+        return droolsExecutor.executeVehicleSystemCheck(
+                inspection,
+                InspectionResult.MANDATORY_EQUIPMENT_PASSED,
+                SystemStatus.MANDATORY_EQUIPMENT,
+                mapper.toMandatoryEquipment(request)
+        );
     }
 
     private Inspection getActiveInspection(Long inspectionId, InspectionResult expectedStatus, String statusErrorMessage) {
@@ -351,22 +246,5 @@ public class InspectionService {
         }
         return inspection;
     }
-
-    private void updateInspectionState(Inspection inspection, FinalDecision decision) {
-        if (decision.getResult() == InspectionResult.NIJE_PROSAO) {
-            inspection.setResult(InspectionResult.NIJE_PROSAO);
-            inspection.setResolved(true);
-            inspection.setFinishedAt(LocalDateTime.now());
-        } else {
-            if(decision.getResult() == InspectionResult.PROSAO){
-                inspection.setResolved(true);
-                inspection.setFinishedAt(LocalDateTime.now());
-            }
-            inspection.setResult(decision.getResult());
-        }
-        inspectionRepository.save(inspection);
-        decision.setDecidedAt(LocalDateTime.now());
-    }
-
 
 }

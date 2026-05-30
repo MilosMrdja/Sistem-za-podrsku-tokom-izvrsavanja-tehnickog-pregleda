@@ -7,6 +7,6 @@
     <app-ui-checkbox label="Registracija je aktivna" formControlName="registrationActive" />
     <app-ui-checkbox label="Prisutne obe registarske tablice" formControlName="bothPlatesPresent" />
     <app-ui-checkbox label="Nema proboja od korozije" formControlName="noCorrosionHoles" />
-    <app-ui-button type="submit" label="Potvrdi preduslove" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi preduslove" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

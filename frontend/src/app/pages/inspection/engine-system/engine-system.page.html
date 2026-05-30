@@ -6,6 +6,6 @@
     <app-ui-checkbox label="Dovod goriva je pravilno pričvršćen" formControlName="fuelSupplySecured" />
     <app-ui-checkbox label="Nema curenja goriva" formControlName="noFuelLeak" />
     <app-ui-checkbox label="Menjač se može upravljati jednom rukom" formControlName="transmissionSafeForSingleHandOperation" />
-    <app-ui-button type="submit" label="Potvrdi proveru motora" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi proveru motora" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

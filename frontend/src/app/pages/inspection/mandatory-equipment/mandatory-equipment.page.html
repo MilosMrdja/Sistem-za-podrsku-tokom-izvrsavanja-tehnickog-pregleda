@@ -5,6 +5,6 @@
     <app-ui-checkbox label="Prva pomoć" formControlName="firstAidKitPresent" />
     <app-ui-checkbox label="Uže ili poluga za vuču" formControlName="towEquipmentPresent" />
     <app-ui-checkbox label="Svetloodbojni prsluk" formControlName="reflectiveVestPresent" />
-    <app-ui-button type="submit" label="Završi proveru opreme" [loading]="loading" />
+    <app-ui-button type="submit" label="Završi proveru opreme" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

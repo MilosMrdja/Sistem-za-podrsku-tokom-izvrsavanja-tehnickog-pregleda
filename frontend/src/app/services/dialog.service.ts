@@ -25,11 +25,15 @@ export class DialogService {
   readonly dialog$ = this.state$.asObservable();
 
   open(options: Partial<DialogState> & Pick<DialogState, 'title' | 'message'>): void {
+    const variant = options.variant ?? 'info';
+
     this.state$.next({
       ...HIDDEN,
       ...options,
       visible: true,
-      variant: options.variant ?? 'info',
+      title: this.getFormalTitle(options.title, variant),
+      message: options.message,
+      variant,
       confirmLabel: options.confirmLabel ?? 'U redu',
     });
   }
@@ -42,5 +46,15 @@ export class DialogService {
 
   close(): void {
     this.state$.next(HIDDEN);
+  }
+
+  private getFormalTitle(title: string, variant: DialogState['variant']): string {
+    if (variant === 'success') {
+      return title || 'Uspešno izvršena operacija';
+    }
+    if (variant === 'error') {
+      return title || 'Greška';
+    }
+    return title;
   }
 }

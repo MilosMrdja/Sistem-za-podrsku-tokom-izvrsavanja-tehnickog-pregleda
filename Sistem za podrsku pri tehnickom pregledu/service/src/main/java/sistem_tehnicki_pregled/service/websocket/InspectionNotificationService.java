@@ -32,12 +32,4 @@ public class InspectionNotificationService {
         log.info("WebSocket obaveštenje poslato na {} sa rezultatom {}", destination, inspection.getResult());
     }
 
-    public void notifyBrakeTestFailed(Long inspectionId, InspectionResult result) {
-        String destination = "/topic/inspection/" + inspectionId + "/brake-test";
-        messagingTemplate.convertAndSend(destination, InspectionResponseDTO.builder()
-                .inspectionId(inspectionId)
-                .result(result)
-                .resultLabel("Provera kočnica nije uspela")
-                .build());
-    }
 }

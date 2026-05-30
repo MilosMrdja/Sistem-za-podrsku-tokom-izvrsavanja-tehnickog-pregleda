@@ -5,6 +5,7 @@ import { InspectionApiService } from '../../../services/api/inspection-api.servi
 import { InspectionFlowService } from '../../../services/inspection-flow.service';
 import { InspectionSessionService } from '../../../services/inspection-session.service';
 import {
+  requiredPercentageValidators,
   requiredPositiveNumberValidators,
   touchInvalidForm,
 } from '../../../shared/form-validators';
@@ -20,7 +21,7 @@ export class BrakeFluidPage extends InspectionPageBase {
 
   loading = false;
   readonly form = this.fb.group({
-    moisturePercent: [2, requiredPositiveNumberValidators()],
+    moisturePercent: [2, requiredPercentageValidators()],
     boilingPointCelsius: [200, requiredPositiveNumberValidators()],
     systemLeaking: [false, Validators.required],
   });

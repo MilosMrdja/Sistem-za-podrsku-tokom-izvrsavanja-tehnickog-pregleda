@@ -11,6 +11,6 @@
       <app-ui-input label="Koeficijent apsorpcije (dizel)" type="number" formControlName="dieselAbsorptionCoefficient" />
       <app-ui-input label="CO (%)" type="number" formControlName="petrolCoPercent" />
     }
-    <app-ui-button type="submit" label="Potvrdi merenje" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi merenje" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

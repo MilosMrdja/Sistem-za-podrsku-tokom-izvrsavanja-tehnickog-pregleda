@@ -22,6 +22,6 @@
     <app-ui-checkbox label="Pokazivači su žuti" formControlName="turnIndicatorsAmber" />
     <app-ui-checkbox label="Hazard prekidač radi" formControlName="hazardSwitchFunctional" />
     <app-ui-checkbox label="Svi pokazivači rade" formControlName="turnIndicatorsFunctional" />
-    <app-ui-button type="submit" label="Potvrdi proveru svetala" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi proveru svetala" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

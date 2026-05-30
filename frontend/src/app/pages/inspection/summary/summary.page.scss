@@ -27,6 +27,25 @@
     white-space: pre-line;
   }
 
+  &__failures {
+    margin-top: 1rem;
+    color: #374151;
+
+    h3 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    li + li {
+      margin-top: 0.35rem;
+    }
+  }
+
   &__meta {
     font-size: 0.85rem;
     color: #6b7280;

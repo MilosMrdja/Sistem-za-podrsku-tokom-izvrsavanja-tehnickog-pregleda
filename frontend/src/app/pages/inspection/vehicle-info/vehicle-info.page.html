@@ -37,6 +37,6 @@
     <app-ui-input label="Opterećenje zadnje osovine (kg)" type="number" formControlName="rearAxleLoadKg" [required]="true" />
     <app-ui-input label="Snaga motora (kW)" type="number" formControlName="enginePowerKw" [required]="true" />
     <app-ui-input label="Dužina vozila (m)" type="number" formControlName="lengthMetres" [required]="true" />
-    <app-ui-button type="submit" label="Sačuvaj i nastavi" [loading]="loading" />
+    <app-ui-button type="submit" label="Sačuvaj i nastavi" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

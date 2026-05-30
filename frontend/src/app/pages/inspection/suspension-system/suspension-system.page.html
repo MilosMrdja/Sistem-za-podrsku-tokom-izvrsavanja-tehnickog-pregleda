@@ -6,6 +6,6 @@
     <app-ui-checkbox label="Zglobovi su ispravni" formControlName="jointsIntact" />
     <app-ui-checkbox label="Amortizeri su ispravni" formControlName="shockAbsorbersIntact" />
     <app-ui-checkbox label="Opruge su ispravne" formControlName="springsIntact" />
-    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

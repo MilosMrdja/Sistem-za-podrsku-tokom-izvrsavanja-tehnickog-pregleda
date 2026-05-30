@@ -6,6 +6,6 @@
     <app-ui-checkbox label="Marka se poklapa sa bazom" formControlName="brandMatchesDatabase" />
     <app-ui-checkbox label="Godina proizvodnje se poklapa sa bazom" formControlName="productionYearMatchesDatabase" />
     <app-ui-checkbox label="Vozilo postoji u evidenciji" formControlName="existsInDatabase" />
-    <app-ui-button type="submit" label="Potvrdi identifikaciju" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi identifikaciju" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

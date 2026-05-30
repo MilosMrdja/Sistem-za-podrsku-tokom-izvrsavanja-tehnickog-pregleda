@@ -59,6 +59,23 @@ export function requiredNonNegativeNumberValidators(): ValidatorFn[] {
   return [Validators.required, Validators.min(0)];
 }
 
+export function requiredPercentageValidators(): ValidatorFn[] {
+  return [Validators.required, percentageRangeValidator()];
+}
+
+export function percentageRangeValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value == null || value === '') {
+      return null;
+    }
+    const numericValue = Number(value);
+    return numericValue >= 1 && numericValue <= 100
+      ? null
+      : { percentageRange: true };
+  };
+}
+
 export function dateNotBefore(
   beforeControlName: string,
   errorKey: string,
@@ -115,6 +132,9 @@ export function getValidationErrorMessage(
   }
   if (errors['min']) {
     return 'Vrednost mora biti veća od 0.';
+  }
+  if (errors['percentageRange']) {
+    return 'Procenat mora biti između 1 i 100.';
   }
   if (errors['invalidVin']) {
     return 'VIN mora imati tačno 17 slova i brojeva.';

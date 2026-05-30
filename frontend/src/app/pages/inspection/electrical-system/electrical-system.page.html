@@ -2,6 +2,6 @@
   <form [formGroup]="form" (ngSubmit)="submit()">
     <app-ui-checkbox label="Vodovi su zaštićeni od habanja" formControlName="wiringProtected" />
     <app-ui-checkbox label="Akumulator je dobro pričvršćen" formControlName="batterySecured" />
-    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" />
+    <app-ui-button type="submit" label="Potvrdi proveru" [loading]="loading" [disabled]="form.invalid" />
   </form>
 </app-ui-form-card>

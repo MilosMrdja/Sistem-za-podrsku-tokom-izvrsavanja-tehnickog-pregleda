@@ -68,19 +68,11 @@ rule "FINAL: Vehicle failed — one or more systems failed"
          or SystemStatus(systemName == SystemStatus.BRAKE_TEST,         failed == true)
         )
     then
-System.out.println("--- Trenutni objekti u CEP sesiji FINAL ---");
-                for (Object fact : drools.getKieRuntime().getObjects()) {
-                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
-                }
         modify($d){
             setResult(InspectionResult.NIJE_PROSAO),
             setPrimaryReason("Ustanovljeni su nedostaci koji onemogućavaju prolazak tehničkog pregleda."),
             setResolved(true)
         };
-        System.out.println("--- Trenutni objekti u CEP sesiji FINAL2 ---");
-                        for (Object facts : drools.getKieRuntime().getObjects()) {
-                            System.out.println("   -> " + facts.getClass().getSimpleName() + ": " + facts);
-                        }
 end
 
 
@@ -221,10 +213,7 @@ rule "FINAL: Brake test result check passed"
         not InspectionIssue(system == "BRAKE_TEST", passed == false)
 
     then
-    System.out.println("--- Trenutni objekti u CEP sesiji final prosao passed ---");
-                    for (Object fact : drools.getKieRuntime().getObjects()) {
-                        System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
-                    }
+
         modify($d){
             setResult(InspectionResult.BRAKE_TEST_PASSED),
             setPrimaryReason("Kočnice zadovoljavaju sve uslove."),
@@ -252,10 +241,6 @@ rule "FINAL: Vehicle passed — no failures detected"
         $d : FinalDecision(resolved == false)
         not InspectionIssue(passed == false)
     then
-System.out.println("--- Trenutni objekti u CEP sesiji final prosao ---");
-                for (Object fact : drools.getKieRuntime().getObjects()) {
-                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
-                }
         modify($d){
                 setResult(InspectionResult.PROSAO),
                 setPrimaryReason("Vozilo ispunjava sve tehničke uslove."),

@@ -8,7 +8,10 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition:
+    background-color 0.2s,
+    box-shadow 0.2s,
+    opacity 0.2s;
 
   &:disabled {
     opacity: 0.55;
@@ -23,6 +26,11 @@
   &--secondary {
     background: #e5e7eb;
     color: #111827;
+
+    &:hover:not(:disabled) {
+      background: #d1d5db;
+      box-shadow: 0 2px 8px rgba(17, 24, 39, 0.12);
+    }
   }
 
   &--danger {

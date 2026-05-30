@@ -27,6 +27,21 @@ export class SummaryPage extends InspectionPageBase {
     return this.s?.lastResult === InspectionResult.PROSAO;
   }
 
+  get failureReasons(): string[] {
+    if (!this.s?.systems) {
+      return [];
+    }
+
+    return Object.values(this.s.systems)
+      .filter((system) => !system.passed)
+      .flatMap((system) => {
+        if (system.failureReasons?.length) {
+          return system.failureReasons;
+        }
+        return [`${system.systemName} nije prošao proveru.`];
+      });
+  }
+
   startNew(): void {
     this.session.clear();
     this.router.navigate(['/pregled/vozilo']);

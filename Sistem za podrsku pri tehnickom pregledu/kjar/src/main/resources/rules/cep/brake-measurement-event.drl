@@ -30,7 +30,7 @@ when
         ((wheelId == WheelId.RL || wheelId == WheelId.RR) && axleId != AxleId.REAR)
     )
 then
-    System.out.println("⚠ [Drools CEP] Detektovano loše mapiranje točka/osovine za ID: " + $e.inspectionId);
+    //System.out.println("⚠ [Drools CEP] Detektovano loše mapiranje točka/osovine za ID: " + $e.inspectionId);
     insert(
         InspectionIssue.of(
             "WHEEL_TIRE",
@@ -66,7 +66,7 @@ when
 then
     double ovality = ($max != 0) ? (($max - $min) / $max) * 100.0 : 0.0;
 
-    System.out.println("📊 [Drools CEP] Agregacija za " + $wheelId + " (Pregled: " + $id + ") -> Max: " + $max + "daN, Ovalnost: " + ovality + "%");
+    //System.out.println("📊 [Drools CEP] Agregacija za " + $wheelId + " (Pregled: " + $id + ") -> Max: " + $max + "daN, Ovalnost: " + ovality + "%");
 
     insert(
         BrakeTestResultFact.of(
@@ -85,7 +85,7 @@ salience 95
 when
     $r : BrakeTestResultFact(maxForce < 1, $id : inspectionId, $wId : wheelId)
 then
-    System.out.println("🚨 [Drools CEP] NEDOVOLJNA SILA KOČENJA: " + $wId + " ima samo " + $r.maxForce + " daN");
+    //System.out.println("🚨 [Drools CEP] NEDOVOLJNA SILA KOČENJA: " + $wId + " ima samo " + $r.maxForce + " daN");
     //insert(BrakeFailureFact.of($id, "LOW_FORCE_" + $wId));
     insert(
             InspectionIssue.of(
@@ -105,7 +105,7 @@ when
     $r : BrakeTestResultFact(wheelId == WheelId.FR, $rf : maxForce, inspectionId == $id)
     eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 100)
 then
-    System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST PREDNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
+    //System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST PREDNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
     //insert(BrakeFailureFact.of($id, "IMBALANCE_AXLE_FRONT"));
         insert(
                 InspectionIssue.of(
@@ -124,7 +124,7 @@ when
     $r : BrakeTestResultFact(wheelId == WheelId.RR, $rf : maxForce, inspectionId == $id)
     eval(Math.abs($lf - $rf) / Math.max($lf, $rf) * 100 > 100)
 then
-    System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST YADNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
+    //System.out.println("🚨 [Drools CEP] NEUJEDNAČENOST YADNJE OSOVINE (" + $id + "): Razlika je veća od 20% (" + $lf + " vs " + $rf + ")");
     //insert(BrakeFailureFact.of($id, "IMBALANCE_AXLE_FRONT"));
         insert(
                 InspectionIssue.of(
@@ -142,7 +142,7 @@ salience 95
 when
     $r : BrakeTestResultFact(ovalityPercent > 100, $id : inspectionId, $wId : wheelId)
 then
-    System.out.println("🚨 [Drools CEP] OVALNOST PREKO DOZVOLJENE: " + $wId + " iznosi " + $r.ovalityPercent + "%");
+    //System.out.println("🚨 [Drools CEP] OVALNOST PREKO DOZVOLJENE: " + $wId + " iznosi " + $r.ovalityPercent + "%");
     //insert(BrakeFailureFact.of($id, "OVALITY_" + $wId));
 
     insert(

@@ -7,6 +7,7 @@ import { InspectionApiService } from '../../../services/api/inspection-api.servi
 import { InspectionFlowService } from '../../../services/inspection-flow.service';
 import { InspectionSessionService } from '../../../services/inspection-session.service';
 import {
+  requiredPercentageValidators,
   requiredPositiveNumberValidators,
   touchInvalidForm,
 } from '../../../shared/form-validators';
@@ -66,7 +67,7 @@ export class WheelTirePage extends InspectionPageBase {
       wheelId: [wheel.wheelId, Validators.required],
       axleId: [{ value: wheel.axleId, disabled: true }, Validators.required],
       widthMm: [205, requiredPositiveNumberValidators()],
-      aspectRatioPercent: [55, requiredPositiveNumberValidators()],
+      aspectRatioPercent: [55, requiredPercentageValidators()],
       rimDiameterInches: [16, requiredPositiveNumberValidators()],
       loadIndex: [91, requiredPositiveNumberValidators()],
       constructionType: ['RADIAL', Validators.required],

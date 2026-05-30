@@ -28,6 +28,7 @@ export class InspectionSessionService {
     if (!response.inspectionId) {
       return;
     }
+    console.log('Inspection response from backend:', response);
     this.save({
       inspectionId: response.inspectionId,
       registrationPlate: response.registrationPlate ?? '',
@@ -36,6 +37,7 @@ export class InspectionSessionService {
       lastResult: response.result,
       lastResultLabel: response.resultLabel,
       primaryReason: response.primaryReason,
+      systems: response.systems,
       finished: this.isTerminal(response.result),
     });
   }
@@ -45,6 +47,7 @@ export class InspectionSessionService {
     if (!current) {
       return;
     }
+    console.log('Inspection response from backend:', response);
     this.save({
       ...current,
       inspectionId: response.inspectionId ?? current.inspectionId,
@@ -53,6 +56,7 @@ export class InspectionSessionService {
       lastResult: response.result,
       lastResultLabel: response.resultLabel,
       primaryReason: response.primaryReason,
+      systems: response.systems ?? current.systems,
       finished: this.isTerminal(response.result),
     });
   }

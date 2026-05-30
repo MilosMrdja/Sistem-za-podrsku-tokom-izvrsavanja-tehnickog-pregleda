@@ -29,20 +29,12 @@ export class InspectionFlowService {
   handleSuccess(response: InspectionResponseDto, onContinue?: () => void): void {
     this.session.updateFromResponse(response);
 
-    const title = response.resultLabel ?? 'Rezultat';
-    const body = response.primaryReason
-      ? `${title}\n\n${response.primaryReason}`
-      : title;
-
-    const systemsText = this.formatSystems(response);
-    const fullBody = systemsText ? `${body}\n\n${systemsText}` : body;
-
     if (this.session.isTerminal(response.result)) {
       this.dialogService.open({
         title: 'Završetak pregleda',
-        message: fullBody,
+        message: this.formatTerminalMessage(response),
         variant: response.result === InspectionResult.PROSAO ? 'success' : 'error',
-        confirmLabel: 'Pogledaj zaključak',
+        confirmLabel: 'U redu',
         onConfirm: () => {
           this.router.navigate(['/pregled/zakljucak']);
           onContinue?.();
@@ -53,10 +45,10 @@ export class InspectionFlowService {
 
     const next = NEXT_ROUTE[response.result];
     this.dialogService.open({
-      title: 'Uspešno',
-      message: fullBody,
+      title: 'Uspešno izvršena operacija',
+      message: response.primaryReason ?? response.resultLabel ?? 'Provera je uspešno završena.',
       variant: 'success',
-      confirmLabel: next ? 'Nastavi' : 'U redu',
+      confirmLabel: 'U redu',
       onConfirm: () => {
         if (next) {
           this.router.navigate([next]);
@@ -66,18 +58,38 @@ export class InspectionFlowService {
     });
   }
 
-  private formatSystems(response: InspectionResponseDto): string {
-    if (!response.systems) {
-      return '';
+  private formatTerminalMessage(response: InspectionResponseDto): string {
+    if (response.result === InspectionResult.PROSAO) {
+      return response.primaryReason ?? response.resultLabel ?? 'Tehnički pregled je uspešno završen.';
     }
+
+    const failedReasons = this.getFailedReasons(response);
+    if (!failedReasons.length) {
+      return (
+        response.primaryReason ??
+        'Ustanovljeni su nedostaci koji onemogućavaju prolazak tehničkog pregleda.'
+      );
+    }
+
+    return [
+      'Ustanovljeni su nedostaci koji onemogućavaju prolazak tehničkog pregleda:',
+      '',
+      ...failedReasons.map((reason) => `- ${reason}`),
+    ].join('\n');
+  }
+
+  private getFailedReasons(response: InspectionResponseDto): string[] {
+    if (!response.systems) {
+      return [];
+    }
+
     return Object.values(response.systems)
-      .map((s) => {
-        const status = s.passed ? 'PROŠLO' : 'NIJE PROŠLO';
-        const reasons = s.failureReasons?.length
-          ? `\n  - ${s.failureReasons.join('\n  - ')}`
-          : '';
-        return `${s.systemName}: ${status}${reasons}`;
-      })
-      .join('\n');
+      .filter((system) => !system.passed)
+      .flatMap((system) => {
+        if (system.failureReasons?.length) {
+          return system.failureReasons;
+        }
+        return [`${system.systemName} nije prošao proveru.`];
+      });
   }
 }

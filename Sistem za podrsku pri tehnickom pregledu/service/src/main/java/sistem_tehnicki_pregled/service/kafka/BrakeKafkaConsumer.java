@@ -12,11 +12,11 @@ import sistem_tehnicki_pregled.model.entities.Inspection;
 import sistem_tehnicki_pregled.model.enums.InspectionResult;
 import sistem_tehnicki_pregled.model.models.FinalDecision;
 import sistem_tehnicki_pregled.model.models.SystemStatus;
+import sistem_tehnicki_pregled.service.application.InspectionStateService;
 import sistem_tehnicki_pregled.service.factories.DroolsSessionFactory;
 import sistem_tehnicki_pregled.service.repositories.InspectionRepository;
 import sistem_tehnicki_pregled.service.websocket.InspectionNotificationService;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 @Component
@@ -27,6 +27,7 @@ public class BrakeKafkaConsumer {
     private KieSession cepSession;
     private final DroolsSessionFactory sessionFactory;
     private final InspectionRepository inspectionRepository;
+    private final InspectionStateService inspectionStateService;
     private final InspectionNotificationService notificationService;
 
     @PostConstruct
@@ -64,6 +65,11 @@ public class BrakeKafkaConsumer {
                         "🏁 Finish signal received: {}",
                         event.getInspectionId());
                 Inspection inspection = inspectionRepository.findById(event.getInspectionId()).orElse(null);
+                if (inspection == null) {
+                    log.warn("Inspection not found for brake finish signal: {}", event.getInspectionId());
+                    return;
+                }
+
                 cepSession.insert(event);
 
                 insertDecisionIfNeeded(event);
@@ -77,11 +83,13 @@ public class BrakeKafkaConsumer {
                 log.info(
                         "FinalDecision: {}",
                         decision);
-                updateInspectionState(inspection, decision);
-
-                if (inspection != null) {
-                    notificationService.notifyBrakeTestFinished(inspection);
+                if (decision == null) {
+                    log.warn("No resolved FinalDecision found for inspection {}", event.getInspectionId());
+                    return;
                 }
+
+                inspectionStateService.applyDecision(inspection, decision);
+                notificationService.notifyBrakeTestFinished(inspection);
 
             } catch (Exception e) {
                 log.error(
@@ -90,18 +98,6 @@ public class BrakeKafkaConsumer {
             }
         }
 
-    }
-
-    private void updateInspectionState(Inspection inspection, FinalDecision decision) {
-        if (decision.getResult() == InspectionResult.NIJE_PROSAO) {
-            inspection.setResult(InspectionResult.NIJE_PROSAO);
-            inspection.setResolved(true);
-            inspection.setFinishedAt(LocalDateTime.now());
-        } else {
-
-            inspection.setResult(decision.getResult());
-        }
-        inspectionRepository.save(inspection);
     }
 
     private void initializeBrakeSystemIfNeeded() {

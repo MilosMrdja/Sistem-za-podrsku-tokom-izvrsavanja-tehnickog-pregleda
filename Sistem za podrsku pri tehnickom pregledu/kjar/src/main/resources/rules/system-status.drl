@@ -39,10 +39,7 @@ rule "STATUS: Aggregate brake test issues"
     then
         List<String> reasons = new ArrayList<>($status.getFailureReasons());
         reasons.add($issue.getDescription());
-        System.out.println("--- Trenutni objekti u CEP sesiji SZSTEM STATUS ---");
-                for (Object fact : drools.getKieRuntime().getObjects()) {
-                    System.out.println("   -> " + fact.getClass().getSimpleName() + ": " + fact);
-                }
+
         modify($status){
             setFailureReasons(reasons),
             setFailed(true)

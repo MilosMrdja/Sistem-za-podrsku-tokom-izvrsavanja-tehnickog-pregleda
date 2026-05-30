@@ -6,6 +6,16 @@
       @if (s.primaryReason) {
         <p class="summary__reason">{{ s.primaryReason }}</p>
       }
+      @if (!passed && failureReasons.length) {
+        <div class="summary__failures">
+          <h3>Razlozi zbog kojih vozilo nije prošlo</h3>
+          <ul>
+            @for (reason of failureReasons; track reason) {
+              <li>{{ reason }}</li>
+            }
+          </ul>
+        </div>
+      }
       <p class="summary__meta">ID pregleda: {{ s.inspectionId }}</p>
     </div>
     <app-ui-button label="Novi pregled" variant="secondary" (pressed)="startNew()" />

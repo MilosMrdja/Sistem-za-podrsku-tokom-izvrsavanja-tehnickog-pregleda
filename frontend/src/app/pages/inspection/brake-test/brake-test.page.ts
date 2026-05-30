@@ -11,7 +11,7 @@ import { InspectionPageBase } from '../shared/inspection-page.base';
 export class BrakeTestPage extends InspectionPageBase implements OnInit, OnDestroy {
   loading = false;
   started = false;
-  statusMessage = 'Test kocnica jos nije pokrenut.';
+  statusMessage = 'Test kočnica još nije pokrenut.';
   private sub?: Subscription;
 
   constructor(
@@ -43,12 +43,12 @@ export class BrakeTestPage extends InspectionPageBase implements OnInit, OnDestr
     }
     const inspectionId = this.session.requireSession().inspectionId;
     this.loading = true;
-    this.statusMessage = 'Pokretanje testa kocnica...';
+    this.statusMessage = 'Pokretanje testa kočnica...';
     this.api.startBrakeTest(inspectionId).subscribe({
       next: () => {
         this.started = true;
         this.statusMessage =
-          'Test kocnica je u toku. Cekamo rezultate sa simulatora (oko 10 sekundi)...';
+          'Test kočnica je u toku. Čekamo rezultate sa simulatora (oko 10 sekundi)...';
       },
       error: () => {
         this.loading = false;
