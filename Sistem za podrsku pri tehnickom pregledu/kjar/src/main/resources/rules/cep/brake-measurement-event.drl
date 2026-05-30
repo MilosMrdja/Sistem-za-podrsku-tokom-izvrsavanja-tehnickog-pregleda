@@ -44,14 +44,11 @@ end
 
 rule "Wheel aggregation"
 salience 100
-// no-loop sprečava da insert unutar ovog pravila ponovo aktivira isto pravilo u istoj milisekundi
 no-loop true
 when
     BrakeTestFinishedEvent($idI : inspectionId)
-    // Uzimamo najnoviji događaj kao okidač
     $e : BrakeMeasurementEvent($wheelId : wheelId, $id : inspectionId)
 
-    // Sprečavamo rekurziju: računamo samo ako već nismo izbacili rezultat u poslednje 3 sekunde
     not (BrakeTestResultFact(inspectionId == $id, wheelId == $wheelId) over window:time(20s))
 
     $max : Double() from accumulate(
